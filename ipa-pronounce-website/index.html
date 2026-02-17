@@ -3,13 +3,70 @@
   <head>
     <meta charset="UTF-8">
     <link rel="icon" href="/favicon.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="IPA音标点读网站 - 帮助英语学习者掌握国际音标发音，提供交互式音标学习体验">
-    <meta name="keywords" content="IPA, 音标, 国际音标, 英语发音, 英语学习">
-    <title>音标点读网站</title>
+    <!-- 移动端Viewport优化 - 禁用缩放，优化微信浏览器体验 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- 禁止电话号码自动检测 -->
+    <meta name="format-detection" content="telephone=no">
+    <!-- 微信浏览器全屏模式 -->
+    <meta name="x5-fullscreen" content="true">
+    <meta name="x5-page-mode" content="app">
+    <!-- iOS Safari全屏 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <!-- 主题色 -->
+    <meta name="theme-color" content="#3b82f6">
+    <!-- SEO Meta -->
+    <meta name="description" content="英语音标点读网站 - 帮助英语学习者掌握44个英语音标发音，提供交互式音标学习体验，支持循环播放和收藏功能">
+    <meta name="keywords" content="IPA, 音标, 英语音标, 英语发音, 英语学习, 英式音标, Gimson音标, 国际音标">
+    <meta name="author" content="英语音标点读">
+    <!-- 微信分享优化 -->
+    <meta property="og:title" content="英语音标点读">
+    <meta property="og:description" content="交互式英语音标学习工具，点击即可听到标准发音">
+    <meta property="og:type" content="website">
+    <!-- 禁止缓存（开发阶段） -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>英语音标点读</title>
+    <!-- 预加载关键资源 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <!-- 移动端CSS优化 -->
+    <style>
+      /* 防止页面加载时的闪烁 */
+      html {
+        background-color: #f8fafc;
+      }
+      [data-theme="dark"] html {
+        background-color: #0f172a;
+      }
+      /* 微信浏览器特定修复 */
+      body {
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      /* 防止iOS橡皮筋效果导致的白边 */
+      body {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      #app {
+        width: 100%;
+        height: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
+    <!-- 微信JS-SDK（如需要分享功能可启用） -->
+    <!-- <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script> -->
   </body>
 </html>

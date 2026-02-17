@@ -7,6 +7,8 @@
  * 依赖列表：无外部依赖
  */
 
+console.log('%c📊 IPA音标数据模块加载中...', 'color: #3b82f6;')
+
 export const ipaPhonemes = [
   // ==================== 单元音 - 前元音 ====================
   {
@@ -647,6 +649,8 @@ export const vowelCount = 20;
 export const consonantCount = 24;
 export const totalCount = 44;
 
+console.log(`%c📊 数据统计: 元音 ${vowelCount}个, 辅音 ${consonantCount}个, 共 ${totalCount}个`, 'color: #10b981;')
+
 export const vowels = ipaPhonemes.filter(p => p.type === 'vowel');
 export const consonants = ipaPhonemes.filter(p => p.type === 'consonant');
 
@@ -659,15 +663,27 @@ export const affricates = ipaPhonemes.filter(p => p.category === 'affricate');
 export const nasals = ipaPhonemes.filter(p => p.category === 'nasal');
 export const approximants = ipaPhonemes.filter(p => p.category === 'approximant');
 
+console.log('%c📊 音标分类统计:', 'color: #10b981;')
+console.log(`  - 单元音: ${monophthongs.length}个`)
+console.log(`  - 双元音: ${diphthongs.length}个`)
+console.log(`  - 爆破音: ${plosives.length}个`)
+console.log(`  - 摩擦音: ${fricatives.length}个`)
+console.log(`  - 破擦音: ${affricates.length}个`)
+console.log(`  - 鼻音: ${nasals.length}个`)
+console.log(`  - 近音: ${approximants.length}个`)
+
 export function searchPhonemes(query) {
+  console.log(`%c🔍 执行搜索: "${query}"`, 'color: #8b5cf6;')
   const lowerQuery = query.toLowerCase();
-  return ipaPhonemes.filter(p =>
+  const results = ipaPhonemes.filter(p =>
     p.symbol.toLowerCase().includes(lowerQuery) ||
     p.name.toLowerCase().includes(lowerQuery) ||
     p.englishName.toLowerCase().includes(lowerQuery) ||
     p.chineseName.toLowerCase().includes(lowerQuery) ||
     p.examples.some(e => e.toLowerCase().includes(lowerQuery))
   );
+  console.log(`%c🔍 搜索结果: ${results.length}个`, 'color: #10b981;')
+  return results;
 }
 
 export function getPhonemeBySymbol(symbol) {

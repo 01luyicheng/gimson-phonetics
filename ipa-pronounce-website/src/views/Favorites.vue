@@ -84,25 +84,132 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+/**
+ * 收藏夹视图组件
+ * 文件用途：展示用户收藏的音标，支持清空收藏
+ * 创建日期：2026-02-17
+ * 输入：无
+ * 输出：收藏夹页面
+ * 依赖：Vue 3, Pinia store, PhonemeCard组件
+ */
+
+import { computed, onMounted, onUnmounted, watch } from 'vue';
 import { usePhonemeStore } from '@/stores/phonemes';
 import PhonemeCard from '@/components/PhonemeCard.vue';
 
+console.log('%c━━━━━━━━━━━━━━━━ Favorites.vue ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
+console.log('%c📄 Favorites.vue 脚本开始执行', 'color: #8b5cf6; font-weight: bold;')
+
 const store = usePhonemeStore();
+
+console.log('%c📊 Favorites.vue 响应式变量初始化...', 'color: #f59e0b;')
 
 const favoritePhonemes = computed(() => store.favoritePhonemes);
 const favoriteVowels = computed(() => favoritePhonemes.value.filter(p => p.type === 'vowel'));
 const favoriteConsonants = computed(() => favoritePhonemes.value.filter(p => p.type === 'consonant'));
 
+console.log('%c✅ 计算属性初始化完成', 'color: #10b981;')
+
+watch(favoritePhonemes, (newVal, oldVal) => {
+  console.log('%c━━━━━━━━━━━━━━━━ 收藏列表变化 ━━━━━━━━━━━━━━━━', 'color: #f59e0b; font-weight: bold;')
+  console.log(`%c⭐ 收藏列表更新: ${oldVal?.length || 0} → ${newVal.length} 个`, 'color: #f59e0b;')
+  
+  if (newVal.length > oldVal?.length) {
+    const added = newVal.filter(p => !oldVal?.some(op => op.symbol === p.symbol))
+    console.log(`%c❤️ 新增收藏:`, 'color: #ef4444;')
+    added.forEach(p => console.log(`%c   + ${p.symbol} (${p.chineseName})`, 'color: #ef4444;'))
+  } else if (newVal.length < oldVal?.length) {
+    const removed = oldVal?.filter(p => !newVal.some(np => np.symbol === p.symbol))
+    console.log(`%c💔 移除收藏:`, 'color: #64748b;')
+    removed?.forEach(p => console.log(`%c   - ${p.symbol} (${p.chineseName})`, 'color: #64748b;'))
+  }
+  
+  console.log(`%c📊 当前收藏统计:`, 'color: #64748b;')
+  console.log(`%c   元音: ${favoriteVowels.value.length} 个`, 'color: #10b981;')
+  console.log(`%c   辅音: ${favoriteConsonants.value.length} 个`, 'color: #3b82f6;')
+}, { deep: true })
+
+watch(favoriteVowels, (newVal, oldVal) => {
+  console.log(`%c🗣️ 收藏元音更新: ${oldVal?.length || 0} → ${newVal.length} 个`, 'color: #10b981;')
+  if (newVal.length > 0) {
+    console.log(`%c   元音列表: ${newVal.map(p => p.symbol).join(', ')}`, 'color: #64748b;')
+  }
+})
+
+watch(favoriteConsonants, (newVal, oldVal) => {
+  console.log(`%c🔤 收藏辅音更新: ${oldVal?.length || 0} → ${newVal.length} 个`, 'color: #3b82f6;')
+  if (newVal.length > 0) {
+    console.log(`%c   辅音列表: ${newVal.map(p => p.symbol).join(', ')}`, 'color: #64748b;')
+  }
+})
+
 const clearAllFavorites = () => {
+  console.log('%c━━━━━━━━━━━━━━━━ 清空收藏 ━━━━━━━━━━━━━━━━', 'color: #ef4444; font-weight: bold;')
+  console.log('%c🗑️ 用户点击清空收藏按钮', 'color: #ef4444; font-weight: bold;')
+  console.log(`%c📊 当前收藏数量: ${favoritePhonemes.value.length}`, 'color: #64748b;')
+  console.log(`%c📊 元音: ${favoriteVowels.value.length} 个`, 'color: #64748b;')
+  console.log(`%c📊 辅音: ${favoriteConsonants.value.length} 个`, 'color: #64748b;')
+  
+  if (favoritePhonemes.value.length === 0) {
+    console.log('%cℹ️ 收藏夹已为空，无需清空', 'color: #64748b;')
+    return
+  }
+  
+  console.log('%c⏳ 弹出确认对话框...', 'color: #f59e0b;')
+  
   if (confirm('确定要清空所有收藏吗？此操作不可撤销。')) {
+    console.log('%c✅ 用户确认清空收藏', 'color: #ef4444;')
+    console.log(`%c🗑️ 正在清空 ${favoritePhonemes.value.length} 个收藏...`, 'color: #ef4444;')
+    
+    const beforeCount = favoritePhonemes.value.length
     store.clearFavorites();
+    
+    console.log(`%c✅ 已清空 ${beforeCount} 个收藏`, 'color: #10b981;')
+    console.log('%c💾 localStorage 已更新', 'color: #10b981;')
+  } else {
+    console.log('%c❌ 用户取消清空收藏', 'color: #64748b;')
   }
 };
 
+const handleGoHome = () => {
+  console.log('%c🏠 用户点击"去发现音标"按钮', 'color: #3b82f6;')
+}
+
 onMounted(() => {
+  console.log('%c━━━━━━━━━━━━━━━━ Favorites.vue 挂载 ━━━━━━━━━━━━━━━━', 'color: #10b981; font-weight: bold;')
+  console.log('%c⭐ Favorites.vue 组件开始挂载...', 'color: #10b981;')
+  
+  const mountStartTime = performance.now()
+  
+  console.log('%c⏳ 正在加载收藏数据...', 'color: #f59e0b;')
   store.initializeStore();
-});
+  
+  console.log('%c━━━━━━━━━━━━━━━━ 收藏统计 ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
+  console.log(`%c📊 当前收藏数量: ${favoritePhonemes.value.length}`, 'color: #10b981;')
+  console.log(`%c📊 元音: ${favoriteVowels.value.length} 个`, 'color: #10b981;')
+  console.log(`%c📊 辅音: ${favoriteConsonants.value.length} 个`, 'color: #10b981;')
+  
+  if (favoritePhonemes.value.length > 0) {
+    console.log('%c📋 收藏的音标列表:', 'color: #3b82f6;')
+    favoritePhonemes.value.forEach((p, i) => {
+      const typeIcon = p.type === 'vowel' ? '🗣️' : '🔤'
+      console.log(`%c   ${i + 1}. ${typeIcon} ${p.symbol} - ${p.chineseName} (${p.category})`, 'color: #64748b;')
+    })
+  } else {
+    console.log('%c📭 收藏夹为空', 'color: #64748b;')
+  }
+  
+  const mountEndTime = performance.now()
+  console.log(`%c⏱️ Favorites.vue 挂载耗时: ${(mountEndTime - mountStartTime).toFixed(2)}ms`, 'color: #10b981;')
+  console.log('%c✅ Favorites.vue 组件挂载完成', 'color: #10b981; font-weight: bold;')
+})
+
+onUnmounted(() => {
+  console.log('%c━━━━━━━━━━━━━━━━ Favorites.vue 卸载 ━━━━━━━━━━━━━━━━', 'color: #f59e0b; font-weight: bold;')
+  console.log('%c👋 Favorites.vue 组件开始卸载...', 'color: #f59e0b;')
+  console.log(`%c📊 当前收藏数量: ${favoritePhonemes.value.length}`, 'color: #64748b;')
+  console.log('%c✅ Favorites.vue 组件卸载完成', 'color: #f59e0b;')
+})
 </script>
 
 <style scoped>
@@ -355,6 +462,89 @@ onMounted(() => {
   .stats-card {
     flex-direction: column;
     gap: 16px;
+  }
+}
+
+[data-theme="dark"] .title {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .subtitle {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .page-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .clear-btn {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+[data-theme="dark"] .clear-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+[data-theme="dark"] .stats-card {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.2) 100%);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .stat-number {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .stat-label {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .empty-state {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .empty-state h2 {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .empty-state p {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .section-title {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .section-title .count {
+  background: #334155;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .phoneme-grid {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+[data-theme="dark"] .tips-section {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+[data-theme="dark"] .tips-section h3 {
+  color: #fcd34d;
+}
+
+[data-theme="dark"] .tips-content p {
+  color: #fbbf24;
+}
+
+@media (max-width: 768px) {
+  [data-theme="dark"] .phoneme-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
   }
 }
 </style>

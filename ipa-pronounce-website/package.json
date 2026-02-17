@@ -11,8 +11,7 @@
     "type-check": "vue-tsc --build",
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint . --fix",
-    "lint:eslint": "eslint . --fix --cache",
-    "download:audio": "node scripts/download-word-audio.js"
+    "lint:eslint": "eslint . --fix --cache"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
