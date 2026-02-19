@@ -408,16 +408,36 @@ onMounted(() => {
   }
 })
 
+/**
+ * 清理音频资源
+ * 实现说明：
+ *   - 暂停音频播放
+ *   - 移除所有事件监听器避免内存泄漏
+ *   - 清空音频src释放资源
+ *   - 触发load()强制释放资源
+ *   - 清空引用
+ */
+const cleanupWordAudio = () => {
+  if (wordAudio.value) {
+    logger.debug('清理单词音频资源')
+    wordAudio.value.pause();
+    wordAudio.value.src = '';
+    wordAudio.value.load();
+    wordAudio.value.onloadeddata = null;
+    wordAudio.value.onerror = null;
+    wordAudio.value.onended = null;
+    wordAudio.value.onwaiting = null;
+    wordAudio.value.onstalled = null;
+    wordAudio.value = null;
+  }
+};
+
 onUnmounted(() => {
   logComponentUnmount(`PhonemeCard: ${props.phoneme.symbol}`)
   if (import.meta.env.DEV) {
     console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
   }
-  if (wordAudio.value) {
-    logger.debug('清理单词音频资源')
-    wordAudio.value.pause();
-    wordAudio.value = null;
-  }
+  cleanupWordAudio();
 });
 </script>
 
