@@ -98,24 +98,24 @@
 
 import { computed, ref, onUnmounted, onMounted, watch } from 'vue';
 import { usePhonemeStore } from '@/stores/phonemes';
+import type { Phoneme } from '@/stores/phonemes';
 import { getCategoryLabel } from '@/data/ipa-data';
 import { logger, logUserAction, logComponentMount, logComponentUnmount, createPerformanceTracker } from '@/utils/logger';
 
-const props = defineProps({
-  phoneme: {
-    type: Object,
-    required: true
-  }
-});
+const props = defineProps<{
+  phoneme: Phoneme
+}>();
 
 const cardId = `${props.phoneme.symbol}-${Date.now().toString(36)}`
-console.log(`%c━━━━━━━━━━━━━━━━ PhonemeCard 创建 ━━━━━━━━━━━━━━━━`, 'color: #8b5cf6;')
-console.log(`%c🎴 PhonemeCard.vue 初始化`, 'color: #8b5cf6; font-weight: bold;')
-console.log(`%c   符号: ${props.phoneme.symbol}`, 'color: #64748b;')
-console.log(`%c   中文名: ${props.phoneme.chineseName}`, 'color: #64748b;')
-console.log(`%c   类型: ${props.phoneme.type}`, 'color: #64748b;')
-console.log(`%c   分类: ${props.phoneme.category}`, 'color: #64748b;')
-console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+if (import.meta.env.DEV) {
+  console.log(`%c━━━━━━━━━━━━━━━━ PhonemeCard 创建 ━━━━━━━━━━━━━━━━`, 'color: #8b5cf6;')
+  console.log(`%c🎴 PhonemeCard.vue 初始化`, 'color: #8b5cf6; font-weight: bold;')
+  console.log(`%c   符号: ${props.phoneme.symbol}`, 'color: #64748b;')
+  console.log(`%c   中文名: ${props.phoneme.chineseName}`, 'color: #64748b;')
+  console.log(`%c   类型: ${props.phoneme.type}`, 'color: #64748b;')
+  console.log(`%c   分类: ${props.phoneme.category}`, 'color: #64748b;')
+  console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+}
 
 const store = usePhonemeStore();
 
@@ -124,21 +124,27 @@ const isLooping = computed(() => store.isCurrentLooping(props.phoneme.symbol));
 const isFavorite = computed(() => store.isFavorite(props.phoneme.symbol));
 
 watch(isPlaying, (newVal, oldVal) => {
-  console.log(`%c━━━━━━━━━━━━━━━━ ${props.phoneme.symbol} 播放状态 ━━━━━━━━━━━━━━━━`, 'color: #3b82f6;')
-  console.log(`%c🔊 ${props.phoneme.symbol} 播放状态: ${oldVal ? '播放中' : '已停止'} → ${newVal ? '播放中' : '已停止'}`, 'color: #3b82f6;')
-  console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+  if (import.meta.env.DEV) {
+    console.log(`%c━━━━━━━━━━━━━━━━ ${props.phoneme.symbol} 播放状态 ━━━━━━━━━━━━━━━━`, 'color: #3b82f6;')
+    console.log(`%c🔊 ${props.phoneme.symbol} 播放状态: ${oldVal ? '播放中' : '已停止'} → ${newVal ? '播放中' : '已停止'}`, 'color: #3b82f6;')
+    console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+  }
 })
 
 watch(isLooping, (newVal, oldVal) => {
-  console.log(`%c━━━━━━━━━━━━━━━━ ${props.phoneme.symbol} 循环状态 ━━━━━━━━━━━━━━━━`, 'color: #10b981;')
-  console.log(`%c🔄 ${props.phoneme.symbol} 循环状态: ${oldVal ? '循环中' : '非循环'} → ${newVal ? '循环中' : '非循环'}`, 'color: #10b981;')
-  console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+  if (import.meta.env.DEV) {
+    console.log(`%c━━━━━━━━━━━━━━━━ ${props.phoneme.symbol} 循环状态 ━━━━━━━━━━━━━━━━`, 'color: #10b981;')
+    console.log(`%c🔄 ${props.phoneme.symbol} 循环状态: ${oldVal ? '循环中' : '非循环'} → ${newVal ? '循环中' : '非循环'}`, 'color: #10b981;')
+    console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+  }
 })
 
 watch(isFavorite, (newVal, oldVal) => {
-  console.log(`%c━━━━━━━━━━━━━━━━ ${props.phoneme.symbol} 收藏状态 ━━━━━━━━━━━━━━━━`, 'color: #f59e0b;')
-  console.log(`%c⭐ ${props.phoneme.symbol} 收藏状态: ${oldVal ? '已收藏' : '未收藏'} → ${newVal ? '已收藏' : '未收藏'}`, 'color: #f59e0b;')
-  console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+  if (import.meta.env.DEV) {
+    console.log(`%c━━━━━━━━━━━━━━━━ ${props.phoneme.symbol} 收藏状态 ━━━━━━━━━━━━━━━━`, 'color: #f59e0b;')
+    console.log(`%c⭐ ${props.phoneme.symbol} 收藏状态: ${oldVal ? '已收藏' : '未收藏'} → ${newVal ? '已收藏' : '未收藏'}`, 'color: #f59e0b;')
+    console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+  }
 })
 
 const categoryLabel = computed(() => getCategoryLabel(props.phoneme.category));
@@ -155,25 +161,33 @@ const isTouching = ref(false);
 
 const handleTouchStart = () => {
   isTouching.value = true;
-  console.log(`%c━━━━━━━━━━━━━━━━ ${props.phoneme.symbol} 触摸事件 ━━━━━━━━━━━━━━━━`, 'color: #64748b;')
-  console.log(`%c👆 触摸开始: ${props.phoneme.symbol}`, 'color: #64748b;')
-  console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+  if (import.meta.env.DEV) {
+    console.log(`%c━━━━━━━━━━━━━━━━ ${props.phoneme.symbol} 触摸事件 ━━━━━━━━━━━━━━━━`, 'color: #64748b;')
+    console.log(`%c👆 触摸开始: ${props.phoneme.symbol}`, 'color: #64748b;')
+    console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+  }
   if (navigator.vibrate && window.matchMedia('(pointer: coarse)').matches) {
     navigator.vibrate(10);
-    console.log(`%c📳 触觉反馈已触发 (10ms)`, 'color: #64748b;')
+    if (import.meta.env.DEV) {
+      console.log(`%c📳 触觉反馈已触发 (10ms)`, 'color: #64748b;')
+    }
   }
 };
 
 const handleTouchEnd = () => {
   isTouching.value = false;
-  console.log(`%c👆 触摸结束: ${props.phoneme.symbol}`, 'color: #64748b;')
+  if (import.meta.env.DEV) {
+    console.log(`%c👆 触摸结束: ${props.phoneme.symbol}`, 'color: #64748b;')
+  }
 };
 
 const handleCardClick = (event: MouseEvent | TouchEvent) => {
   const tracker = createPerformanceTracker(`卡片点击-${props.phoneme.symbol}`)
   tracker.start()
   
-  console.log('%c━━━━━━━━━━━━━━━━ 卡片点击 ━━━━━━━━━━━━━━━━', 'color: #3b82f6; font-weight: bold;')
+  if (import.meta.env.DEV) {
+    console.log('%c━━━━━━━━━━━━━━━━ 卡片点击 ━━━━━━━━━━━━━━━━', 'color: #3b82f6; font-weight: bold;')
+  }
   logUserAction('卡片点击', {
     symbol: props.phoneme.symbol,
     chineseName: props.phoneme.chineseName,
@@ -181,11 +195,13 @@ const handleCardClick = (event: MouseEvent | TouchEvent) => {
     cardId: cardId
   })
   
-  console.log(`%c🖱️ 卡片点击: ${props.phoneme.symbol}`, 'color: #3b82f6; font-weight: bold;')
-  console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
-  console.log(`%c   事件类型: ${event.type}`, 'color: #64748b;')
-  console.log(`%c   当前播放状态: isPlaying=${isPlaying.value}`, 'color: #64748b;')
-  console.log(`%c   当前循环状态: isLooping=${isLooping.value}`, 'color: #64748b;')
+  if (import.meta.env.DEV) {
+    console.log(`%c🖱️ 卡片点击: ${props.phoneme.symbol}`, 'color: #3b82f6; font-weight: bold;')
+    console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+    console.log(`%c   事件类型: ${event.type}`, 'color: #64748b;')
+    console.log(`%c   当前播放状态: isPlaying=${isPlaying.value}`, 'color: #64748b;')
+    console.log(`%c   当前循环状态: isLooping=${isLooping.value}`, 'color: #64748b;')
+  }
   
   const card = event.currentTarget as HTMLElement;
   const rect = card.getBoundingClientRect();
@@ -194,20 +210,31 @@ const handleCardClick = (event: MouseEvent | TouchEvent) => {
   
   if ('touches' in event) {
     const touch = event.touches[0] || event.changedTouches[0];
-    clientX = touch.clientX;
-    clientY = touch.clientY;
-    console.log(`%c   触摸坐标: (${clientX}, ${clientY})`, 'color: #64748b;')
+    if (touch) {
+      clientX = touch.clientX;
+      clientY = touch.clientY;
+    } else {
+      clientX = 0;
+      clientY = 0;
+    }
+    if (import.meta.env.DEV) {
+      console.log(`%c   触摸坐标: (${clientX}, ${clientY})`, 'color: #64748b;')
+    }
   } else {
     clientX = (event as MouseEvent).clientX;
     clientY = (event as MouseEvent).clientY;
-    console.log(`%c   鼠标坐标: (${clientX}, ${clientY})`, 'color: #64748b;')
+    if (import.meta.env.DEV) {
+      console.log(`%c   鼠标坐标: (${clientX}, ${clientY})`, 'color: #64748b;')
+    }
   }
   
   const x = clientX - rect.left;
   const y = clientY - rect.top;
 
-  console.log(`%c   卡片内坐标: (${x.toFixed(0)}, ${y.toFixed(0)})`, 'color: #64748b;')
-  console.log(`%c   卡片尺寸: ${rect.width.toFixed(0)}x${rect.height.toFixed(0)}`, 'color: #64748b;')
+  if (import.meta.env.DEV) {
+    console.log(`%c   卡片内坐标: (${x.toFixed(0)}, ${y.toFixed(0)})`, 'color: #64748b;')
+    console.log(`%c   卡片尺寸: ${rect.width.toFixed(0)}x${rect.height.toFixed(0)}`, 'color: #64748b;')
+  }
 
   tracker.checkpoint('波纹效果')
   
@@ -227,7 +254,9 @@ const handleCardClick = (event: MouseEvent | TouchEvent) => {
     store.stopPlaying();
   } else {
     logger.info(`开始播放: ${props.phoneme.symbol}`)
-    console.log(`%c   音频文件: ${props.phoneme.audioFile}`, 'color: #64748b;')
+    if (import.meta.env.DEV) {
+      console.log(`%c   音频文件: ${props.phoneme.audioFile}`, 'color: #64748b;')
+    }
     store.playPhoneme(props.phoneme, false);
   }
   
@@ -235,7 +264,9 @@ const handleCardClick = (event: MouseEvent | TouchEvent) => {
 };
 
 const handleLoop = () => {
-  console.log('%c━━━━━━━━━━━━━━━━ 循环按钮点击 ━━━━━━━━━━━━━━━━', 'color: #10b981; font-weight: bold;')
+  if (import.meta.env.DEV) {
+    console.log('%c━━━━━━━━━━━━━━━━ 循环按钮点击 ━━━━━━━━━━━━━━━━', 'color: #10b981; font-weight: bold;')
+  }
   logUserAction('循环按钮点击', {
     symbol: props.phoneme.symbol,
     currentLoopState: isLooping.value ? '循环中' : '非循环',
@@ -243,10 +274,12 @@ const handleLoop = () => {
     cardId: cardId
   })
   
-  console.log(`%c🔄 循环按钮点击: ${props.phoneme.symbol}`, 'color: #10b981; font-weight: bold;')
-  console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
-  console.log(`%c   当前循环状态: ${isLooping.value ? '循环中' : '非循环'}`, 'color: #64748b;')
-  console.log(`%c   当前播放状态: ${isPlaying.value ? '播放中' : '已停止'}`, 'color: #64748b;')
+  if (import.meta.env.DEV) {
+    console.log(`%c🔄 循环按钮点击: ${props.phoneme.symbol}`, 'color: #10b981; font-weight: bold;')
+    console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+    console.log(`%c   当前循环状态: ${isLooping.value ? '循环中' : '非循环'}`, 'color: #64748b;')
+    console.log(`%c   当前播放状态: ${isPlaying.value ? '播放中' : '已停止'}`, 'color: #64748b;')
+  }
   
   if (isLooping.value) {
     logger.info(`停止循环播放: ${props.phoneme.symbol}`)
@@ -258,7 +291,9 @@ const handleLoop = () => {
 };
 
 const handleFavorite = () => {
-  console.log('%c━━━━━━━━━━━━━━━━ 收藏按钮点击 ━━━━━━━━━━━━━━━━', 'color: #f59e0b; font-weight: bold;')
+  if (import.meta.env.DEV) {
+    console.log('%c━━━━━━━━━━━━━━━━ 收藏按钮点击 ━━━━━━━━━━━━━━━━', 'color: #f59e0b; font-weight: bold;')
+  }
   logUserAction('收藏按钮点击', {
     symbol: props.phoneme.symbol,
     chineseName: props.phoneme.chineseName,
@@ -266,9 +301,11 @@ const handleFavorite = () => {
     cardId: cardId
   })
   
-  console.log(`%c⭐ 收藏按钮点击: ${props.phoneme.symbol}`, 'color: #f59e0b; font-weight: bold;')
-  console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
-  console.log(`%c   当前收藏状态: ${isFavorite.value ? '已收藏' : '未收藏'}`, 'color: #64748b;')
+  if (import.meta.env.DEV) {
+    console.log(`%c⭐ 收藏按钮点击: ${props.phoneme.symbol}`, 'color: #f59e0b; font-weight: bold;')
+    console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+    console.log(`%c   当前收藏状态: ${isFavorite.value ? '已收藏' : '未收藏'}`, 'color: #64748b;')
+  }
   
   if (isFavorite.value) {
     logger.info(`取消收藏: ${props.phoneme.symbol}`)
@@ -287,7 +324,9 @@ const handleFavorite = () => {
 const wordAudio = ref<HTMLAudioElement | null>(null);
 
 const speakWord = (word: string) => {
-  console.log('%c━━━━━━━━━━━━━━━━ 单词朗读 ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
+  if (import.meta.env.DEV) {
+    console.log('%c━━━━━━━━━━━━━━━━ 单词朗读 ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
+  }
   logUserAction('单词朗读', {
     word: word,
     symbol: props.phoneme.symbol,
@@ -295,8 +334,10 @@ const speakWord = (word: string) => {
   })
   
   logger.info(`朗读单词: ${word}`)
-  console.log(`%c   所属音标: ${props.phoneme.symbol}`, 'color: #64748b;')
-  console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+  if (import.meta.env.DEV) {
+    console.log(`%c   所属音标: ${props.phoneme.symbol}`, 'color: #64748b;')
+    console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+  }
   
   if (wordAudio.value) {
     logger.debug('停止之前的单词音频')
@@ -306,7 +347,9 @@ const speakWord = (word: string) => {
   }
 
   const audioPath = `/word-audio/${word}.mp3`;
-  console.log(`%c   音频路径: ${audioPath}`, 'color: #64748b;')
+  if (import.meta.env.DEV) {
+    console.log(`%c   音频路径: ${audioPath}`, 'color: #64748b;')
+  }
   
   const audioLoadStart = performance.now()
   const audio = new Audio(audioPath);
@@ -315,14 +358,18 @@ const speakWord = (word: string) => {
   audio.onloadeddata = () => {
     const loadTime = performance.now() - audioLoadStart
     logger.performance(`单词音频加载完成: ${word} (${loadTime.toFixed(2)}ms)`)
-    console.log(`%c   音频时长: ${audio.duration.toFixed(2)}s`, 'color: #64748b;')
+    if (import.meta.env.DEV) {
+      console.log(`%c   音频时长: ${audio.duration.toFixed(2)}s`, 'color: #64748b;')
+    }
   }
 
   audio.onerror = () => {
     logger.error(`单词音频加载失败: ${word}`)
-    console.error(`%c   音频路径: ${audioPath}`, 'color: #64748b;')
-    console.error(`%c   错误代码: ${audio.error?.code}`, 'color: #64748b;')
-    console.error(`%c   错误消息: ${audio.error?.message}`, 'color: #64748b;')
+    if (import.meta.env.DEV) {
+      console.error(`%c   音频路径: ${audioPath}`, 'color: #64748b;')
+      console.error(`%c   错误代码: ${audio.error?.code}`, 'color: #64748b;')
+      console.error(`%c   错误消息: ${audio.error?.message}`, 'color: #64748b;')
+    }
     wordAudio.value = null;
   };
 
@@ -343,7 +390,9 @@ const speakWord = (word: string) => {
   if (playPromise !== undefined) {
     playPromise.catch((err) => {
       logger.error(`单词音频播放失败: ${word}`)
-      console.error(`%c   错误信息: ${err.message}`, 'color: #64748b;')
+      if (import.meta.env.DEV) {
+        console.error(`%c   错误信息: ${err.message}`, 'color: #64748b;')
+      }
       wordAudio.value = null;
     });
   }
@@ -351,15 +400,19 @@ const speakWord = (word: string) => {
 
 onMounted(() => {
   logComponentMount(`PhonemeCard: ${props.phoneme.symbol}`)
-  console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
-  console.log(`%c   符号: ${props.phoneme.symbol}`, 'color: #64748b;')
-  console.log(`%c   类型: ${props.phoneme.type}`, 'color: #64748b;')
-  console.log(`%c   分类: ${props.phoneme.category}`, 'color: #64748b;')
+  if (import.meta.env.DEV) {
+    console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+    console.log(`%c   符号: ${props.phoneme.symbol}`, 'color: #64748b;')
+    console.log(`%c   类型: ${props.phoneme.type}`, 'color: #64748b;')
+    console.log(`%c   分类: ${props.phoneme.category}`, 'color: #64748b;')
+  }
 })
 
 onUnmounted(() => {
   logComponentUnmount(`PhonemeCard: ${props.phoneme.symbol}`)
-  console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+  if (import.meta.env.DEV) {
+    console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+  }
   if (wordAudio.value) {
     logger.debug('清理单词音频资源')
     wordAudio.value.pause();

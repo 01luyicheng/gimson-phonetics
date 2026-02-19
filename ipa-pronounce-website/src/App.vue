@@ -12,110 +12,51 @@ import { RouterView, useRoute } from 'vue-router'
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { usePhonemeStore } from '@/stores/phonemes'
 
-console.log('%c📄 App.vue 脚本开始执行', 'color: #8b5cf6; font-weight: bold;')
-
 const route = useRoute()
 const store = usePhonemeStore()
 const isDark = ref(false)
 
 const currentRoute = computed(() => route.name)
-const favoriteCount = computed(() => store.favorites.length)
-
-console.log('%c📊 App.vue 响应式变量初始化完成', 'color: #10b981;')
+const favoriteCount = computed(() => store.favorites.value.length)
 
 watch(currentRoute, (newRoute, oldRoute) => {
-  console.log('%c━━━━━━━━━━━━━━━━ 路由变化 ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
-  console.log(`%c🔄 从 ${String(oldRoute || 'null')} 切换到 ${String(newRoute)}`, 'color: #8b5cf6;')
-  console.log(`%c📍 当前路径: ${route.path}`, 'color: #64748b;')
-  console.log(`%c📋 路由参数: ${JSON.stringify(route.params)}`, 'color: #64748b;')
-  console.log(`%c🔍 查询参数: ${JSON.stringify(route.query)}`, 'color: #64748b;')
+  console.log(`路由切换: ${String(oldRoute || 'null')} -> ${String(newRoute)}`)
 }, { immediate: false })
 
 const toggleTheme = () => {
-  const oldTheme = isDark.value ? 'dark' : 'light'
   isDark.value = !isDark.value
-  const newTheme = isDark.value ? 'dark' : 'light'
-  
-  console.log('%c━━━━━━━━━━━━━━━━ 主题切换 ━━━━━━━━━━━━━━━━', 'color: #f59e0b; font-weight: bold;')
-  console.log(`%c🎨 主题切换: ${oldTheme} → ${newTheme}`, 'color: #f59e0b;')
-  
   applyTheme()
   localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
-  
-  console.log(`%c💾 主题已保存到 localStorage`, 'color: #10b981;')
-  console.log(`%c🌐 data-theme 属性: ${isDark.value ? 'dark' : 'light'}`, 'color: #64748b;')
 }
 
 const applyTheme = () => {
   document.documentElement.setAttribute('data-theme', isDark.value ? 'dark' : 'light')
-  console.log(`%c✅ 主题已应用到 DOM`, 'color: #10b981;')
 }
 
 const handleSystemThemeChange = (e: MediaQueryListEvent) => {
-  console.log('%c━━━━━━━━━━━━━━━━ 系统主题变化 ━━━━━━━━━━━━━━━━', 'color: #f59e0b; font-weight: bold;')
-  console.log(`%c🖥️ 系统主题变化: ${e.matches ? 'dark' : 'light'}`, 'color: #f59e0b;')
   if (!localStorage.getItem('theme')) {
     isDark.value = e.matches
     applyTheme()
-    console.log(`%c✅ 已跟随系统主题`, 'color: #10b981;')
-  } else {
-    console.log(`%cℹ️ 用户已设置主题，忽略系统主题变化`, 'color: #64748b;')
   }
 }
 
 onMounted(() => {
-  console.log('%c━━━━━━━━━━━━━━━━ App.vue 挂载 ━━━━━━━━━━━━━━━━', 'color: #10b981; font-weight: bold;')
-  console.log('%c📱 App.vue 组件开始挂载...', 'color: #10b981;')
-  
   const savedTheme = localStorage.getItem('theme')
-  console.log(`%c💾 localStorage 中的主题设置: ${savedTheme || '未设置'}`, 'color: #64748b;')
-  
   if (savedTheme) {
     isDark.value = savedTheme === 'dark'
-    console.log(`%c📋 使用保存的主题: ${savedTheme}`, 'color: #10b981;')
   } else {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     isDark.value = prefersDark
-    console.log(`%c🖥️ 使用系统主题: ${prefersDark ? 'dark' : 'light'}`, 'color: #10b981;')
   }
-  
   applyTheme()
-  
-  console.log('%c⏳ 正在初始化 Store...', 'color: #f59e0b;')
-  store.initializeStore()
-  
-  console.log('%c━━━━━━━━━━━━━━━━ Store 状态 ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
-  console.log(`%c⭐ 收藏夹数量: ${favoriteCount.value}`, 'color: #10b981;')
-  console.log(`%c📈 学习进度: ${store.progress.length} / ${store.phonemes.length}`, 'color: #10b981;')
-  console.log(`%c🎵 播放全部模式: ${store.playAllMode ? '开启' : '关闭'}`, 'color: #10b981;')
-  console.log(`%c📱 微信浏览器: ${store.isWechatBrowser ? '是' : '否'}`, 'color: #10b981;')
-  
+
   const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
   mediaQuery.addEventListener('change', handleSystemThemeChange)
-  console.log('%c✅ 系统主题变化监听器已注册', 'color: #10b981;')
-  
-  console.log('%c✅ App.vue 组件挂载完成', 'color: #10b981; font-weight: bold;')
 })
 
 onUnmounted(() => {
-  console.log('%c👋 App.vue 组件卸载', 'color: #f59e0b;')
   const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
   mediaQuery.removeEventListener('change', handleSystemThemeChange)
-  console.log('%c✅ 系统主题变化监听器已移除', 'color: #10b981;')
-})
-
-watch(favoriteCount, (newCount, oldCount) => {
-  console.log('%c━━━━━━━━━━━━━━━━ 收藏夹变化 ━━━━━━━━━━━━━━━━', 'color: #f59e0b; font-weight: bold;')
-  console.log(`%c⭐ 收藏数量变化: ${oldCount} → ${newCount}`, 'color: #f59e0b;')
-  if (newCount > oldCount) {
-    console.log(`%c❤️ 新增了 ${newCount - oldCount} 个收藏`, 'color: #ef4444;')
-  } else if (newCount < oldCount) {
-    console.log(`%c💔 移除了 ${oldCount - newCount} 个收藏`, 'color: #64748b;')
-  }
-}, { immediate: false })
-
-watch(isDark, (newVal, oldVal) => {
-  console.log(`%c🌙 isDark 响应式变化: ${oldVal} → ${newVal}`, 'color: #8b5cf6;')
 })
 </script>
 
@@ -263,19 +204,17 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-sm);
 }
 
 .header-inner {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 24px;
   height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
 }
 
 /* Logo */
@@ -284,11 +223,11 @@ body {
   align-items: center;
   gap: 10px;
   text-decoration: none;
-  transition: opacity var(--transition-fast);
+  transition: transform var(--transition-fast);
 }
 
 .logo:hover {
-  opacity: 0.8;
+  transform: scale(1.02);
 }
 
 .logo-emoji {
@@ -300,7 +239,7 @@ body {
   font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: -0.3px;
+  letter-spacing: -0.5px;
 }
 
 /* 导航菜单 */
@@ -308,26 +247,24 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 1;
-  justify-content: center;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
+  gap: 6px;
+  padding: 8px 16px;
   border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--text-secondary);
   font-size: 14px;
   font-weight: 500;
-  color: var(--text-secondary);
-  text-decoration: none;
   transition: all var(--transition-fast);
   position: relative;
 }
 
 .nav-item:hover {
-  color: var(--text-primary);
+  color: var(--accent-primary);
   background: var(--bg-tertiary);
 }
 
@@ -428,83 +365,16 @@ body {
   }
 
   .nav-item {
-    padding: 8px 12px;
+    padding: 6px 12px;
+    font-size: 13px;
   }
 
   .nav-label {
     display: none;
   }
 
-  .theme-toggle {
-    width: 36px;
-    height: 36px;
-  }
-
   .app-footer {
     padding: 16px;
   }
-}
-
-@media (max-width: 480px) {
-  .header-inner {
-    padding: 0 12px;
-  }
-
-  .logo-emoji {
-    font-size: 20px;
-  }
-
-  .logo-text {
-    font-size: 15px;
-  }
-
-  .nav-item {
-    padding: 8px;
-  }
-
-  .nav-icon {
-    width: 20px;
-    height: 20px;
-  }
-}
-
-/* ============================================
-   工具类
-   ============================================ */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* 滚动条样式 */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg-tertiary);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--text-muted);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
-}
-
-/* 选中文字样式 */
-::selection {
-  background: var(--accent-primary);
-  color: white;
 }
 </style>

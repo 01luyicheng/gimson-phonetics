@@ -289,8 +289,10 @@ import {
   approximants
 } from '@/data/ipa-data';
 
-console.log('%c━━━━━━━━━━━━━━━━ Home.vue ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
-console.log('%c📄 Home.vue 脚本开始执行', 'color: #8b5cf6; font-weight: bold;')
+if (import.meta.env.DEV) {
+  console.log('%c━━━━━━━━━━━━━━━━ Home.vue ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
+  console.log('%c📄 Home.vue 脚本开始执行', 'color: #8b5cf6; font-weight: bold;')
+}
 
 const store = usePhonemeStore();
 const searchInputRef = ref(null);
@@ -310,7 +312,9 @@ const toggleInfoCard = () => {
   localStorage.setItem(INFO_CARD_COLLAPSED_KEY, String(isInfoCardCollapsed.value));
 };
 
-console.log('%c📊 Home.vue 响应式变量初始化完成', 'color: #10b981;')
+if (import.meta.env.DEV) {
+  console.log('%c📊 Home.vue 响应式变量初始化完成', 'color: #10b981;')
+}
 
 const searchQuery = computed({
   get: () => store.searchQuery,
@@ -319,10 +323,12 @@ const searchQuery = computed({
     const timeSinceLastSearch = now - lastSearchTime.value
     lastSearchTime.value = now
     
-    console.log('%c━━━━━━━━━━━━━━━━ 搜索输入 ━━━━━━━━━━━━━━━━', 'color: #3b82f6; font-weight: bold;')
-    console.log(`%c🔍 搜索内容: "${value}"`, 'color: #3b82f6;')
-    console.log(`%c📏 输入长度: ${value.length} 字符`, 'color: #64748b;')
-    console.log(`%c⏱️ 距上次输入: ${timeSinceLastSearch}ms`, 'color: #64748b;')
+    if (import.meta.env.DEV) {
+      console.log('%c━━━━━━━━━━━━━━━━ 搜索输入 ━━━━━━━━━━━━━━━━', 'color: #3b82f6; font-weight: bold;')
+      console.log(`%c🔍 搜索内容: "${value}"`, 'color: #3b82f6;')
+      console.log(`%c📏 输入长度: ${value.length} 字符`, 'color: #64748b;')
+      console.log(`%c⏱️ 距上次输入: ${timeSinceLastSearch}ms`, 'color: #64748b;')
+    }
     
     store.searchQuery = value;
   }
@@ -332,52 +338,62 @@ const filteredPhonemes = computed(() => store.filteredPhonemes);
 const playAllMode = computed(() => store.playAllMode);
 
 watch(filteredPhonemes, (newVal, oldVal) => {
-  console.log('%c━━━━━━━━━━━━━━━━ 筛选结果 ━━━━━━━━━━━━━━━━', 'color: #10b981; font-weight: bold;')
-  console.log(`%c📋 筛选结果更新: ${oldVal?.length || 0} → ${newVal.length} 个`, 'color: #10b981;')
-  if (newVal.length > 0 && newVal.length <= 10) {
-    console.log('%c📝 筛选到的音标:', 'color: #64748b;')
-    newVal.forEach((p, i) => {
-      console.log(`   ${i + 1}. ${p.symbol} - ${p.chineseName}`)
-    })
+  if (import.meta.env.DEV) {
+    console.log('%c━━━━━━━━━━━━━━━━ 筛选结果 ━━━━━━━━━━━━━━━━', 'color: #10b981; font-weight: bold;')
+    console.log(`%c📋 筛选结果更新: ${oldVal?.length || 0} → ${newVal.length} 个`, 'color: #10b981;')
+    if (newVal.length > 0 && newVal.length <= 10) {
+      console.log('%c📝 筛选到的音标:', 'color: #64748b;')
+      newVal.forEach((p, i) => {
+        console.log(`   ${i + 1}. ${p.symbol} - ${p.chineseName}`)
+      })
+    }
   }
 }, { immediate: false })
 
 watch(playAllMode, (newVal, oldVal) => {
-  console.log('%c━━━━━━━━━━━━━━━━ 播放全部模式 ━━━━━━━━━━━━━━━━', 'color: #f59e0b; font-weight: bold;')
-  console.log(`%c🎵 播放全部模式: ${oldVal ? '开启' : '关闭'} → ${newVal ? '开启' : '关闭'}`, 'color: #f59e0b;')
-  if (newVal) {
-    console.log(`%c📊 当前播放位置: 第 ${store.playAllIndex + 1} 个音标`, 'color: #64748b;')
-    console.log(`%c📊 保存的播放位置: 第 ${store.savedPlayAllIndex + 1} 个音标`, 'color: #64748b;')
+  if (import.meta.env.DEV) {
+    console.log('%c━━━━━━━━━━━━━━━━ 播放全部模式 ━━━━━━━━━━━━━━━━', 'color: #f59e0b; font-weight: bold;')
+    console.log(`%c🎵 播放全部模式: ${oldVal ? '开启' : '关闭'} → ${newVal ? '开启' : '关闭'}`, 'color: #f59e0b;')
+    if (newVal) {
+      console.log(`%c📊 当前播放位置: 第 ${store.playAllIndex + 1} 个音标`, 'color: #64748b;')
+      console.log(`%c📊 保存的播放位置: 第 ${store.savedPlayAllIndex + 1} 个音标`, 'color: #64748b;')
+    }
   }
 }, { immediate: false })
 
 watch(searchQuery, (newVal, oldVal) => {
-  if (newVal !== oldVal) {
+  if (import.meta.env.DEV && newVal !== oldVal) {
     console.log(`%c🔎 searchQuery 变化: "${oldVal}" → "${newVal}"`, 'color: #8b5cf6;')
   }
 })
 
 const clearSearch = () => {
-  console.log('%c━━━━━━━━━━━━━━━━ 清除搜索 ━━━━━━━━━━━━━━━━', 'color: #64748b; font-weight: bold;')
-  console.log(`%c🧹 清除搜索内容: "${store.searchQuery}"`, 'color: #64748b;')
-  console.log(`%c📊 清除前筛选结果: ${filteredPhonemes.value.length} 个`, 'color: #64748b;')
+  if (import.meta.env.DEV) {
+    console.log('%c━━━━━━━━━━━━━━━━ 清除搜索 ━━━━━━━━━━━━━━━━', 'color: #64748b; font-weight: bold;')
+    console.log(`%c🧹 清除搜索内容: "${store.searchQuery}"`, 'color: #64748b;')
+    console.log(`%c📊 清除前筛选结果: ${filteredPhonemes.value.length} 个`, 'color: #64748b;')
+  }
   store.searchQuery = '';
-  console.log('%c✅ 搜索已清除', 'color: #10b981;')
+  if (import.meta.env.DEV) {
+    console.log('%c✅ 搜索已清除', 'color: #10b981;')
+  }
 };
 
 const handlePlayAll = () => {
-  console.log('%c━━━━━━━━━━━━━━━━ 播放全部按钮 ━━━━━━━━━━━━━━━━', 'color: #3b82f6; font-weight: bold;')
-  console.log('%c▶️ 用户点击播放全部按钮', 'color: #3b82f6; font-weight: bold;')
-  console.log(`%c📊 当前播放状态: playAllMode=${store.playAllMode}`, 'color: #64748b;')
-  console.log(`%c📊 当前播放位置: playAllIndex=${store.playAllIndex}`, 'color: #64748b;')
-  console.log(`%c📊 保存的播放位置: savedPlayAllIndex=${store.savedPlayAllIndex}`, 'color: #64748b;')
-  
-  if (store.playAllMode) {
-    console.log('%c⏹️ 将停止播放', 'color: #ef4444;')
-  } else {
-    console.log('%c▶️ 将开始播放', 'color: #10b981;')
-    if (store.savedPlayAllIndex > 0) {
-      console.log(`%c📍 将从第 ${store.savedPlayAllIndex + 1} 个音标继续播放`, 'color: #f59e0b;')
+  if (import.meta.env.DEV) {
+    console.log('%c━━━━━━━━━━━━━━━━ 播放全部按钮 ━━━━━━━━━━━━━━━━', 'color: #3b82f6; font-weight: bold;')
+    console.log('%c▶️ 用户点击播放全部按钮', 'color: #3b82f6; font-weight: bold;')
+    console.log(`%c📊 当前播放状态: playAllMode=${store.playAllMode}`, 'color: #64748b;')
+    console.log(`%c📊 当前播放位置: playAllIndex=${store.playAllIndex}`, 'color: #64748b;')
+    console.log(`%c📊 保存的播放位置: savedPlayAllIndex=${store.savedPlayAllIndex}`, 'color: #64748b;')
+    
+    if (store.playAllMode) {
+      console.log('%c⏹️ 将停止播放', 'color: #ef4444;')
+    } else {
+      console.log('%c▶️ 将开始播放', 'color: #10b981;')
+      if (store.savedPlayAllIndex > 0) {
+        console.log(`%c📍 将从第 ${store.savedPlayAllIndex + 1} 个音标继续播放`, 'color: #f59e0b;')
+      }
     }
   }
   
@@ -385,56 +401,70 @@ const handlePlayAll = () => {
 };
 
 const handleSearchFocus = () => {
-  console.log('%c🎯 搜索框获得焦点', 'color: #3b82f6;')
+  if (import.meta.env.DEV) {
+    console.log('%c🎯 搜索框获得焦点', 'color: #3b82f6;')
+  }
 }
 
 const handleSearchBlur = () => {
-  console.log('%c🎯 搜索框失去焦点', 'color: #64748b;')
+  if (import.meta.env.DEV) {
+    console.log('%c🎯 搜索框失去焦点', 'color: #64748b;')
+  }
 }
 
 const handleSearchKeydown = (e) => {
-  console.log(`%c⌨️ 搜索框按键: ${e.key}`, 'color: #64748b;')
+  if (import.meta.env.DEV) {
+    console.log(`%c⌨️ 搜索框按键: ${e.key}`, 'color: #64748b;')
+  }
   if (e.key === 'Escape') {
     clearSearch()
   }
 }
 
 onMounted(() => {
-  console.log('%c━━━━━━━━━━━━━━━━ Home.vue 挂载 ━━━━━━━━━━━━━━━━', 'color: #10b981; font-weight: bold;')
-  console.log('%c🏠 Home.vue 组件开始挂载...', 'color: #10b981;')
+  if (import.meta.env.DEV) {
+    console.log('%c━━━━━━━━━━━━━━━━ Home.vue 挂载 ━━━━━━━━━━━━━━━━', 'color: #10b981; font-weight: bold;')
+    console.log('%c🏠 Home.vue 组件开始挂载...', 'color: #10b981;')
+  }
   
   const mountStartTime = performance.now()
   
-  console.log('%c⏳ 加载音标数据...', 'color: #f59e0b;')
-  console.log(`%c📊 音标数据统计:`, 'color: #3b82f6;')
-  console.log(`%c   📊 元音总数: ${vowelCount.value}`, 'color: #10b981;')
-  console.log(`%c   📊 辅音总数: ${consonantCount.value}`, 'color: #10b981;')
-  console.log(`%c   📊 单元音: ${monophthongs.length} 个`, 'color: #10b981;')
-  console.log(`%c   📊 双元音: ${diphthongs.length} 个`, 'color: #10b981;')
-  console.log(`%c   📊 爆破音: ${plosives.length} 个`, 'color: #10b981;')
-  console.log(`%c   📊 摩擦音: ${fricatives.length} 个`, 'color: #10b981;')
-  console.log(`%c   📊 破擦音: ${affricates.length} 个`, 'color: #10b981;')
-  console.log(`%c   📊 鼻音: ${nasals.length} 个`, 'color: #10b981;')
-  console.log(`%c   📊 近音: ${approximants.length} 个`, 'color: #10b981;')
+  if (import.meta.env.DEV) {
+    console.log('%c⏳ 加载音标数据...', 'color: #f59e0b;')
+    console.log(`%c📊 音标数据统计:`, 'color: #3b82f6;')
+    console.log(`%c   📊 元音总数: ${vowelCount}`, 'color: #10b981;')
+    console.log(`%c   📊 辅音总数: ${consonantCount}`, 'color: #10b981;')
+    console.log(`%c   📊 单元音: ${monophthongs.length} 个`, 'color: #10b981;')
+    console.log(`%c   📊 双元音: ${diphthongs.length} 个`, 'color: #10b981;')
+    console.log(`%c   📊 爆破音: ${plosives.length} 个`, 'color: #10b981;')
+    console.log(`%c   📊 摩擦音: ${fricatives.length} 个`, 'color: #10b981;')
+    console.log(`%c   📊 破擦音: ${affricates.length} 个`, 'color: #10b981;')
+    console.log(`%c   📊 鼻音: ${nasals.length} 个`, 'color: #10b981;')
+    console.log(`%c   📊 近音: ${approximants.length} 个`, 'color: #10b981;')
+  }
   
   store.initializeStore();
   
-  console.log('%c━━━━━━━━━━━━━━━━ Store 状态 ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
-  console.log(`%c⭐ 收藏数量: ${store.favorites.length}`, 'color: #10b981;')
-  console.log(`%c📈 学习进度: ${store.progress.length} / ${store.phonemes.length}`, 'color: #10b981;')
-  console.log(`%c🔍 搜索内容: "${store.searchQuery || '空'}"`, 'color: #10b981;')
-  
-  const mountEndTime = performance.now()
-  console.log(`%c⏱️ Home.vue 挂载耗时: ${(mountEndTime - mountStartTime).toFixed(2)}ms`, 'color: #10b981;')
-  console.log('%c✅ Home.vue 组件挂载完成', 'color: #10b981; font-weight: bold;')
+  if (import.meta.env.DEV) {
+    console.log('%c━━━━━━━━━━━━━━━━ Store 状态 ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
+    console.log(`%c⭐ 收藏数量: ${store.favorites.length}`, 'color: #10b981;')
+    console.log(`%c📈 学习进度: ${store.progress.length} / ${store.phonemes.length}`, 'color: #10b981;')
+    console.log(`%c🔍 搜索内容: "${store.searchQuery || '空'}"`, 'color: #10b981;')
+    
+    const mountEndTime = performance.now()
+    console.log(`%c⏱️ Home.vue 挂载耗时: ${(mountEndTime - mountStartTime).toFixed(2)}ms`, 'color: #10b981;')
+    console.log('%c✅ Home.vue 组件挂载完成', 'color: #10b981; font-weight: bold;')
+  }
 })
 
 onUnmounted(() => {
-  console.log('%c━━━━━━━━━━━━━━━━ Home.vue 卸载 ━━━━━━━━━━━━━━━━', 'color: #f59e0b; font-weight: bold;')
-  console.log('%c👋 Home.vue 组件开始卸载...', 'color: #f59e0b;')
-  console.log(`%c📊 当前搜索内容: "${store.searchQuery || '空'}"`, 'color: #64748b;')
-  console.log(`%c📊 播放全部模式: ${store.playAllMode ? '开启' : '关闭'}`, 'color: #64748b;')
-  console.log('%c✅ Home.vue 组件卸载完成', 'color: #f59e0b;')
+  if (import.meta.env.DEV) {
+    console.log('%c━━━━━━━━━━━━━━━━ Home.vue 卸载 ━━━━━━━━━━━━━━━━', 'color: #f59e0b; font-weight: bold;')
+    console.log('%c👋 Home.vue 组件开始卸载...', 'color: #f59e0b;')
+    console.log(`%c📊 当前搜索内容: "${store.searchQuery || '空'}"`, 'color: #64748b;')
+    console.log(`%c📊 播放全部模式: ${store.playAllMode ? '开启' : '关闭'}`, 'color: #64748b;')
+    console.log('%c✅ Home.vue 组件卸载完成', 'color: #f59e0b;')
+  }
 })
 </script>
 

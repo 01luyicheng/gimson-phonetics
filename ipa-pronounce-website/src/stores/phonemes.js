@@ -10,17 +10,43 @@
  *   - 支持播放位置记忆和断点续播
  */
 
-console.log('%c📊 phonemes.js 模块开始加载', 'color: #8b5cf6; font-weight: bold;')
+if (import.meta.env.DEV) {
+  console.log('%c📊 phonemes.js 模块开始加载', 'color: #8b5cf6; font-weight: bold;')
+}
 
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { ipaPhonemes, getAudioPath, searchPhonemes, vowels, consonants } from '@/data/ipa-data';
 import { logger, setupAudioLogging, logAudioEvent } from '@/utils/logger';
 
-console.log(`%c📦 音标数据已加载: ${ipaPhonemes.length} 个音标`, 'color: #10b981;')
+/**
+ * @typedef {Object} Phoneme
+ * @property {string} symbol - 音标符号
+ * @property {string} name - 音标名称
+ * @property {'vowel'|'consonant'} type - 音标类型
+ * @property {string} category - 分类
+ * @property {string} subCategory - 子分类
+ * @property {string} position - 发音位置
+ * @property {boolean} rounded - 是否圆唇
+ * @property {string} audioFile - 音频文件名
+ * @property {string[]} examples - 示例词
+ * @property {string} description - 描述
+ * @property {string} englishName - 英文名称
+ * @property {string} chineseName - 中文名称
+ */
+
+/** @type {Phoneme} */
+export const Phoneme = {};
+export const PhonemeStore = {};
+
+if (import.meta.env.DEV) {
+  console.log(`%c📦 音标数据已加载: ${ipaPhonemes.length} 个音标`, 'color: #10b981;')
+}
 
 export const usePhonemeStore = defineStore('phonemes', () => {
-  console.log('%c🏪 Pinia Store 初始化中...', 'color: #3b82f6; font-weight: bold;')
+  if (import.meta.env.DEV) {
+    console.log('%c🏪 Pinia Store 初始化中...', 'color: #3b82f6; font-weight: bold;')
+  }
   const phonemes = ref(ipaPhonemes);
   const favorites = ref([]);
   const progress = ref([]);
@@ -39,13 +65,17 @@ export const usePhonemeStore = defineStore('phonemes', () => {
   const isWechatBrowser = ref(false);
 
   const initializeStore = () => {
-    console.log('%c📊 正在初始化音标Store...', 'color: #3b82f6;')
+    if (import.meta.env.DEV) {
+      console.log('%c📊 正在初始化音标Store...', 'color: #3b82f6;')
+    }
     
     // 检测微信浏览器
     const ua = navigator.userAgent.toLowerCase();
     isWechatBrowser.value = /micromessenger/.test(ua);
     if (isWechatBrowser.value) {
-      console.log('%c📱 检测到微信浏览器，启用音频兼容模式', 'color: #07c160;');
+      if (import.meta.env.DEV) {
+        console.log('%c📱 检测到微信浏览器，启用音频兼容模式', 'color: #07c160;');
+      }
     }
     
     const savedFavorites = localStorage.getItem('ipa-favorites');
@@ -53,20 +83,28 @@ export const usePhonemeStore = defineStore('phonemes', () => {
     const savedPlayAllIndexStr = localStorage.getItem('ipa-playall-index');
     if (savedFavorites) {
       favorites.value = JSON.parse(savedFavorites);
-      console.log(`%c⭐ 已加载收藏: ${favorites.value.length} 个`, 'color: #10b981;')
+      if (import.meta.env.DEV) {
+        console.log(`%c⭐ 已加载收藏: ${favorites.value.length} 个`, 'color: #10b981;')
+      }
     }
     if (savedProgress) {
       progress.value = JSON.parse(savedProgress);
-      console.log(`%c📈 已加载学习进度: ${progress.value.length} 个音标`, 'color: #10b981;')
+      if (import.meta.env.DEV) {
+        console.log(`%c📈 已加载学习进度: ${progress.value.length} 个音标`, 'color: #10b981;')
+      }
     }
     if (savedPlayAllIndexStr !== null) {
       const parsedIndex = parseInt(savedPlayAllIndexStr, 10);
       if (!isNaN(parsedIndex) && parsedIndex >= 0) {
         savedPlayAllIndex.value = parsedIndex;
-        console.log(`%c🎵 已加载播放位置: 第 ${parsedIndex + 1} 个音标`, 'color: #10b981;')
+        if (import.meta.env.DEV) {
+          console.log(`%c🎵 已加载播放位置: 第 ${parsedIndex + 1} 个音标`, 'color: #10b981;')
+        }
       }
     }
-    console.log(`%c📋 总音标数量: ${phonemes.value.length} (元音: ${vowels.length}, 辅音: ${consonants.length})`, 'color: #10b981;')
+    if (import.meta.env.DEV) {
+      console.log(`%c📋 总音标数量: ${phonemes.value.length} (元音: ${vowels.length}, 辅音: ${consonants.length})`, 'color: #10b981;')
+    }
     
     // 页面卸载时保存播放位置
     window.addEventListener('beforeunload', () => {
@@ -168,20 +206,24 @@ export const usePhonemeStore = defineStore('phonemes', () => {
    * 如果是在播放全部模式下停止，保存当前播放位置
    */
   const stopAllPlayback = () => {
+  if (import.meta.env.DEV) {
     console.log('%c⏹️ 停止所有播放', 'color: #f59e0b;')
-    if (playAllMode.value && playAllIndex.value > 0) {
-      savedPlayAllIndex.value = playAllIndex.value;
-      saveToLocalStorage();
+  }
+  if (playAllMode.value && playAllIndex.value > 0) {
+    savedPlayAllIndex.value = playAllIndex.value;
+    saveToLocalStorage();
+    if (import.meta.env.DEV) {
       console.log(`%c💾 已保存播放位置: 第 ${playAllIndex.value + 1} 个音标`, 'color: #10b981;')
     }
-    cleanupAudio();
-    isPlaying.value = false;
-    isLooping.value = false;
-    loopPhonemeSymbol.value = null;
-    playAllMode.value = false;
-    playAllIndex.value = 0;
-    currentPhoneme.value = null;
-  };
+  }
+  cleanupAudio();
+  isPlaying.value = false;
+  isLooping.value = false;
+  loopPhonemeSymbol.value = null;
+  playAllMode.value = false;
+  playAllIndex.value = 0;
+  currentPhoneme.value = null;
+};
 
   /**
    * 播放音频（带微信浏览器兼容性处理）
@@ -229,16 +271,20 @@ export const usePhonemeStore = defineStore('phonemes', () => {
    * @returns {HTMLAudioElement} 音频对象
    */
   const playPhoneme = async (phoneme, loop = false) => {
-    console.log('%c━━━━━━━━━━━━━━━━ 播放音标 ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
+    if (import.meta.env.DEV) {
+      console.log('%c━━━━━━━━━━━━━━━━ 播放音标 ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
+    }
     logger.info(`播放音标: ${phoneme.symbol} ${loop ? '(循环播放)' : ''}`)
-    console.log(`%c📊 音标详情:`, 'color: #64748b;')
-    console.log(`%c   符号: ${phoneme.symbol}`, 'color: #64748b;')
-    console.log(`%c   中文名: ${phoneme.chineseName}`, 'color: #64748b;')
-    console.log(`%c   英文名: ${phoneme.englishName}`, 'color: #64748b;')
-    console.log(`%c   类型: ${phoneme.type}`, 'color: #64748b;')
-    console.log(`%c   分类: ${phoneme.category}`, 'color: #64748b;')
-    console.log(`%c   音频文件: ${phoneme.audioFile}`, 'color: #64748b;')
-    console.log(`%c   示例词: ${phoneme.examples.join(', ')}`, 'color: #64748b;')
+    if (import.meta.env.DEV) {
+      console.log(`%c📊 音标详情:`, 'color: #64748b;')
+      console.log(`%c   符号: ${phoneme.symbol}`, 'color: #64748b;')
+      console.log(`%c   中文名: ${phoneme.chineseName}`, 'color: #64748b;')
+      console.log(`%c   英文名: ${phoneme.englishName}`, 'color: #64748b;')
+      console.log(`%c   类型: ${phoneme.type}`, 'color: #64748b;')
+      console.log(`%c   分类: ${phoneme.category}`, 'color: #64748b;')
+      console.log(`%c   音频文件: ${phoneme.audioFile}`, 'color: #64748b;')
+      console.log(`%c   示例词: ${phoneme.examples.join(', ')}`, 'color: #64748b;')
+    }
     
     if (playAllMode.value) {
       stopAllPlayback();
@@ -270,8 +316,10 @@ export const usePhonemeStore = defineStore('phonemes', () => {
     audio.onloadeddata = () => {
       const loadTime = performance.now() - audioLoadStart
       logger.performance(`音频加载完成: ${phoneme.symbol} (${loadTime.toFixed(2)}ms)`)
-      console.log(`%c📊 音频时长: ${audio.duration.toFixed(2)}s`, 'color: #64748b;')
-      console.log(`%c📊 音频状态: readyState=${audio.readyState}`, 'color: #64748b;')
+      if (import.meta.env.DEV) {
+        console.log(`%c📊 音频时长: ${audio.duration.toFixed(2)}s`, 'color: #64748b;')
+        console.log(`%c📊 音频状态: readyState=${audio.readyState}`, 'color: #64748b;')
+      }
     }
 
     audio.onended = () => {
@@ -285,8 +333,10 @@ export const usePhonemeStore = defineStore('phonemes', () => {
 
     audio.onerror = () => {
       logger.error(`音频加载失败: ${phoneme.audioFile}`)
-      console.error(`%c❌ 错误代码: ${audio.error?.code}`, 'color: #ef4444;')
-      console.error(`%c❌ 错误消息: ${audio.error?.message}`, 'color: #ef4444;')
+      if (import.meta.env.DEV) {
+        console.error(`%c❌ 错误代码: ${audio.error?.code}`, 'color: #ef4444;')
+        console.error(`%c❌ 错误消息: ${audio.error?.message}`, 'color: #ef4444;')
+      }
       stopCurrentAudio();
     };
 
@@ -337,10 +387,14 @@ export const usePhonemeStore = defineStore('phonemes', () => {
     const index = favorites.value.indexOf(symbol);
     if (index > -1) {
       favorites.value.splice(index, 1);
-      console.log(`%c💔 取消收藏: ${symbol}`, 'color: #ef4444;')
+      if (import.meta.env.DEV) {
+        console.log(`%c💔 取消收藏: ${symbol}`, 'color: #ef4444;')
+      }
     } else {
       favorites.value.push(symbol);
-      console.log(`%c❤️ 添加收藏: ${symbol}`, 'color: #f43f5e;')
+      if (import.meta.env.DEV) {
+        console.log(`%c❤️ 添加收藏: ${symbol}`, 'color: #f43f5e;')
+      }
     }
     saveToLocalStorage();
   };
@@ -364,7 +418,9 @@ export const usePhonemeStore = defineStore('phonemes', () => {
    * 已针对微信浏览器优化
    */
   const playAllPhonemes = async () => {
-    console.log('%c━━━━━━━━━━━━━━━━ 播放全部音标 ━━━━━━━━━━━━━━━━', 'color: #3b82f6; font-weight: bold;')
+    if (import.meta.env.DEV) {
+      console.log('%c━━━━━━━━━━━━━━━━ 播放全部音标 ━━━━━━━━━━━━━━━━', 'color: #3b82f6; font-weight: bold;')
+    }
     logger.info('播放全部音标模式')
     
     if (playAllMode.value) {
@@ -383,9 +439,11 @@ export const usePhonemeStore = defineStore('phonemes', () => {
     currentPhoneme.value = null;
     
     const allPhonemes = [...vowels, ...consonants];
-    console.log(`%c📊 总音标数量: ${allPhonemes.length}`, 'color: #64748b;')
-    console.log(`%c📊 元音数量: ${vowels.length}`, 'color: #10b981;')
-    console.log(`%c📊 辅音数量: ${consonants.length}`, 'color: #3b82f6;')
+    if (import.meta.env.DEV) {
+      console.log(`%c📊 总音标数量: ${allPhonemes.length}`, 'color: #64748b;')
+      console.log(`%c📊 元音数量: ${vowels.length}`, 'color: #10b981;')
+      console.log(`%c📊 辅音数量: ${consonants.length}`, 'color: #3b82f6;')
+    }
     
     const startIndex = savedPlayAllIndex.value > 0 && savedPlayAllIndex.value < allPhonemes.length 
       ? savedPlayAllIndex.value 
@@ -396,11 +454,15 @@ export const usePhonemeStore = defineStore('phonemes', () => {
     
     if (startIndex > 0) {
       logger.info(`从第 ${startIndex + 1} 个音标继续播放`)
-      console.log(`%c📊 保存的播放位置: 第 ${savedPlayAllIndex.value + 1} 个`, 'color: #64748b;')
+      if (import.meta.env.DEV) {
+        console.log(`%c📊 保存的播放位置: 第 ${savedPlayAllIndex.value + 1} 个`, 'color: #64748b;')
+      }
     }
     
     const PLAY_INTERVAL = 200;
-    console.log(`%c📊 播放间隔: ${PLAY_INTERVAL}ms`, 'color: #64748b;')
+    if (import.meta.env.DEV) {
+      console.log(`%c📊 播放间隔: ${PLAY_INTERVAL}ms`, 'color: #64748b;')
+    }
     
     const playStartTime = performance.now()
     let playedCount = 0
@@ -416,11 +478,13 @@ export const usePhonemeStore = defineStore('phonemes', () => {
       cleanupAudio();
       
       const phoneme = allPhonemes[playAllIndex.value];
-      console.log('%c━━━━━━━━━━━━━━━━ 播放进度 ━━━━━━━━━━━━━━━━', 'color: #3b82f6;')
-      console.log(`%c🎵 正在播放: 第 ${playAllIndex.value + 1}/${allPhonemes.length} 个`, 'color: #3b82f6; font-weight: bold;')
-      console.log(`%c   符号: ${phoneme.symbol}`, 'color: #64748b;')
-      console.log(`%c   中文名: ${phoneme.chineseName}`, 'color: #64748b;')
-      console.log(`%c   类型: ${phoneme.type === 'vowel' ? '元音' : '辅音'}`, 'color: #64748b;')
+      if (import.meta.env.DEV) {
+        console.log('%c━━━━━━━━━━━━━━━━ 播放进度 ━━━━━━━━━━━━━━━━', 'color: #3b82f6;')
+        console.log(`%c🎵 正在播放: 第 ${playAllIndex.value + 1}/${allPhonemes.length} 个`, 'color: #3b82f6; font-weight: bold;')
+        console.log(`%c   符号: ${phoneme.symbol}`, 'color: #64748b;')
+        console.log(`%c   中文名: ${phoneme.chineseName}`, 'color: #64748b;')
+        console.log(`%c   类型: ${phoneme.type === 'vowel' ? '元音' : '辅音'}`, 'color: #64748b;')
+      }
       
       const audioLoadStart = performance.now()
       const audio = new Audio(getAudioPath(phoneme.audioFile));
@@ -435,7 +499,9 @@ export const usePhonemeStore = defineStore('phonemes', () => {
       
       audio.onloadeddata = () => {
         const loadTime = performance.now() - audioLoadStart
-        console.log(`%c   音频加载: ${loadTime.toFixed(2)}ms`, 'color: #64748b;')
+        if (import.meta.env.DEV) {
+          console.log(`%c   音频加载: ${loadTime.toFixed(2)}ms`, 'color: #64748b;')
+        }
       }
       
       audio.onended = () => {

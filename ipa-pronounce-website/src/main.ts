@@ -100,34 +100,41 @@ console.log('%c━━━━━━━━━━━━━━━━ 性能统计 ━
 console.log(`%c⏱️ 总启动时间: ${totalTime}ms`, 'color: #10b981;')
 console.log(`%c⏱️ 挂载时间: ${mountTime}ms`, 'color: #10b981;')
 console.log(`%c💾 内存使用: ${(performance as any).memory?.usedJSHeapSize ? `${((performance as any).memory.usedJSHeapSize / 1024 / 1024).toFixed(2)}MB` : 'N/A'}`, 'color: #10b981;')
-console.log('%c━━━━━━━━━━━━━━━━ 调试提示 ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
-console.log('%c💡 提示: 使用 window.__APP__ 访问应用实例', 'color: #64748b; font-style: italic;')
-console.log('%c💡 提示: 使用 window.__PINIA__ 访问 Pinia 实例', 'color: #64748b; font-style: italic;')
-console.log('%c💡 提示: 使用 window.__ROUTER__ 访问 Router 实例', 'color: #64748b; font-style: italic;')
+// 安全修复：全局调试变量仅在开发环境暴露，避免生产环境安全风险
+if (import.meta.env.DEV) {
+  console.log('%c━━━━━━━━━━━━━━━━ 调试提示 ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
+  console.log('%c💡 提示: 使用 window.__APP__ 访问应用实例', 'color: #64748b; font-style: italic;')
+  console.log('%c💡 提示: 使用 window.__PINIA__ 访问 Pinia 实例', 'color: #64748b; font-style: italic;')
+  console.log('%c💡 提示: 使用 window.__ROUTER__ 访问 Router 实例', 'color: #64748b; font-style: italic;')
 
-;(window as any).__APP__ = app
-;(window as any).__PINIA__ = pinia
-;(window as any).__ROUTER__ = router
+  ;(window as any).__APP__ = app
+  ;(window as any).__PINIA__ = pinia
+  ;(window as any).__ROUTER__ = router
 
-console.log('%c✅ 全局调试变量已挂载到 window 对象', 'color: #10b981;')
+  console.log('%c✅ 全局调试变量已挂载到 window 对象', 'color: #10b981;')
 
-console.log('%c━━━━━━━━━━━━━━━━ 监控器初始化 ━━━━━━━━━━━━━━━━', 'color: #ec4899; font-weight: bold;')
-console.log('%c⏳ 正在初始化全局监控器...', 'color: #f59e0b;')
+  console.log('%c━━━━━━━━━━━━━━━━ 监控器初始化 ━━━━━━━━━━━━━━━━', 'color: #ec4899; font-weight: bold;')
+  console.log('%c⏳ 正在初始化全局监控器...', 'color: #f59e0b;')
 
-initAllMonitors({ fps: true, memory: true })
+  // 性能监控器仅在开发环境启用，避免生产环境资源消耗
+  initAllMonitors({ fps: true, memory: true })
+}
 
-console.log('%c⏳ 正在记录localStorage使用情况...', 'color: #f59e0b;')
-logStorageUsage()
+// 开发环境专用调试日志
+if (import.meta.env.DEV) {
+  console.log('%c⏳ 正在记录localStorage使用情况...', 'color: #f59e0b;')
+  logStorageUsage()
 
-console.log('%c⏳ 正在记录初始内存使用...', 'color: #f59e0b;')
-logMemoryUsage()
+  console.log('%c⏳ 正在记录初始内存使用...', 'color: #f59e0b;')
+  logMemoryUsage()
 
-console.log('%c━━━━━━━━━━━━━━━━ 调试命令 ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
-console.log('%c💡 可用的调试命令:', 'color: #64748b; font-style: italic;')
-console.log('%c   - window.__APP__       : Vue应用实例', 'color: #64748b;')
-console.log('%c   - window.__PINIA__     : Pinia状态管理实例', 'color: #64748b;')
-console.log('%c   - window.__ROUTER__    : Vue Router实例', 'color: #64748b;')
-console.log('%c   - logger               : 日志工具模块', 'color: #64748b;')
+  console.log('%c━━━━━━━━━━━━━━━━ 调试命令 ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
+  console.log('%c💡 可用的调试命令:', 'color: #64748b; font-style: italic;')
+  console.log('%c   - window.__APP__       : Vue应用实例', 'color: #64748b;')
+  console.log('%c   - window.__PINIA__     : Pinia状态管理实例', 'color: #64748b;')
+  console.log('%c   - window.__ROUTER__    : Vue Router实例', 'color: #64748b;')
+  console.log('%c   - logger               : 日志工具模块', 'color: #64748b;')
+}
 
 logger.success('应用启动完成！')
 logger.info(`Vue版本: ${vueVersion}`)
