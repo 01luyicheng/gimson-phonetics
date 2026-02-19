@@ -23,10 +23,7 @@
     <meta property="og:title" content="英语音标点读">
     <meta property="og:description" content="交互式英语音标学习工具，点击即可听到标准发音">
     <meta property="og:type" content="website">
-    <!-- 禁止缓存（开发阶段） -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+
     <title>英语音标点读</title>
     <!-- 预加载关键资源 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -47,19 +44,14 @@
         -webkit-user-select: none;
         user-select: none;
       }
-      /* 防止iOS橡皮筋效果导致的白边 */
-      body {
-        position: fixed;
+      /* 移动端优化 */
+      html, body {
         width: 100%;
-        height: 100%;
-        overflow: hidden;
+        min-height: 100vh;
       }
       #app {
         width: 100%;
-        height: 100%;
-        overflow-y: auto;
-        overflow-x: hidden;
-        -webkit-overflow-scrolling: touch;
+        min-height: 100vh;
       }
     </style>
   </head>
