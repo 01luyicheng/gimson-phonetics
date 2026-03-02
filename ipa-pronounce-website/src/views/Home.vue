@@ -136,7 +136,6 @@
       <section class="phonemes-section">
         <div class="section-header">
           <div class="section-title-wrapper">
-            <span class="section-icon vowel-icon">🗣️</span>
             <h2 class="section-title">元音</h2>
             <span class="section-count">{{ vowelCount }}个</span>
           </div>
@@ -175,7 +174,6 @@
       <section class="phonemes-section">
         <div class="section-header">
           <div class="section-title-wrapper">
-            <span class="section-icon consonant-icon">🔤</span>
             <h2 class="section-title">辅音</h2>
             <span class="section-count">{{ consonantCount }}个</span>
           </div>
@@ -256,6 +254,8 @@
     <!-- 页面底部 -->
     <footer class="page-footer">
       <div class="footer-content">
+        <p>陆奕丞</p>
+        <span class="footer-divider">·</span>
         <p>音频来源：<a href="https://ipachart.app" target="_blank" rel="noopener">ipachart.app</a></p>
         <span class="footer-divider">·</span>
         <p>点击卡片播放音标发音</p>

@@ -227,9 +227,9 @@ export const usePhonemeStore = defineStore('phonemes', () => {
   const initAudioContext = () => {
     if (isWechatBrowser.value && !audioContext.value) {
       try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-          audioContext.value = new AudioContext();
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContextClass) {
+          audioContext.value = new AudioContextClass();
           // 尝试恢复音频上下文（如果处于suspended状态）
           if (audioContext.value.state === 'suspended') {
             audioContext.value.resume();
@@ -548,6 +548,17 @@ export const usePhonemeStore = defineStore('phonemes', () => {
       cleanupAudio();
       
       const phoneme = allPhonemes[playAllIndex.value];
+      if (!phoneme) {
+        logger.error(`无法获取音标，索引: ${playAllIndex.value}`)
+        playAllIndex.value++;
+        setTimeout(() => {
+          if (playAllMode.value) {
+            playNext();
+          }
+        }, PLAY_INTERVAL);
+        return;
+      }
+      
       if (import.meta.env.DEV) {
         console.log('%c━━━━━━━━━━━━━━━━ 播放进度 ━━━━━━━━━━━━━━━━', 'color: #3b82f6;')
         console.log(`%c🎵 正在播放: 第 ${playAllIndex.value + 1}/${allPhonemes.length} 个`, 'color: #3b82f6; font-weight: bold;')

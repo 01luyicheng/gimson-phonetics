@@ -17,7 +17,7 @@ const store = usePhonemeStore()
 const isDark = ref(false)
 
 const currentRoute = computed(() => route.name)
-const favoriteCount = computed(() => store.favorites.value.length)
+const favoriteCount = computed(() => store.favorites.length)
 
 watch(currentRoute, (newRoute, oldRoute) => {
   console.log(`路由切换: ${String(oldRoute || 'null')} -> ${String(newRoute)}`)
@@ -67,7 +67,6 @@ onUnmounted(() => {
       <div class="header-inner">
         <!-- Logo -->
         <router-link to="/" class="logo">
-          <span class="logo-emoji">🎤</span>
           <span class="logo-text">英语音标点读</span>
         </router-link>
 
@@ -103,7 +102,7 @@ onUnmounted(() => {
 
     <!-- 底部 -->
     <footer class="app-footer">
-      <p class="footer-text">英语国际音标点读网站 · English IPA Pronunciation</p>
+      <p class="footer-text">陆奕丞 · Gimson音标点读网站</p>
     </footer>
   </div>
 </template>
