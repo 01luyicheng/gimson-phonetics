@@ -1,11 +1,10 @@
 /**
- * IPA英语音标数据配置文件
- * 文件用途：包含英语中会用到的44个Gimson音标的详细信息
+ * Gimson音标数据配置文件
+ * 文件用途：包含英语中使用的44个Gimson音标的详细信息
  * 创建日期：2026-02-16
  * 数据来源：
- *   - 单元音(12个): Wikimedia Commons (Denelson83录制, CC BY-SA 3.0)
- *   - 双元音(8个): ipachart.app
- *   - 辅音(24个): Wikimedia Commons (Peter Isotalo录制, CC BY-SA 3.0)
+ *   - 音标音频(44个): ipachart.app（经ffmpeg裁剪，仅保留音标发音）
+ *   - 单词音频: 项目自带
  * 输入输出签名：导出音标数据数组和辅助函数
  * 依赖列表：无外部依赖
  */

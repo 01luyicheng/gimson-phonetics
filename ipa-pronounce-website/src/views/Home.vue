@@ -254,7 +254,7 @@
     <!-- 页面底部 -->
     <footer class="page-footer">
       <div class="footer-content">
-        <p>陆奕丞</p>
+        <p>©陆奕丞</p>
         <span class="footer-divider">·</span>
         <p>音频来源：<a href="https://ipachart.app" target="_blank" rel="noopener">ipachart.app</a></p>
         <span class="footer-divider">·</span>

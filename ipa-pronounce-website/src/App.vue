@@ -102,7 +102,7 @@ onUnmounted(() => {
 
     <!-- 底部 -->
     <footer class="app-footer">
-      <p class="footer-text">陆奕丞 · Gimson音标点读网站</p>
+      <p class="footer-text">Gimson音标点读网站</p>
     </footer>
   </div>
 </template>
