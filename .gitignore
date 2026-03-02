@@ -53,3 +53,4 @@ download_*.py
 # 系统文件
 .DS_Store
 Thumbs.db
+temp_clipped/
