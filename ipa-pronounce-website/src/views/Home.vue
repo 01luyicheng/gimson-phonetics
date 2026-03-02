@@ -256,8 +256,6 @@
       <div class="footer-content">
         <p>©陆奕丞</p>
         <span class="footer-divider">·</span>
-        <p>音频来源：<a href="https://ipachart.app" target="_blank" rel="noopener">ipachart.app</a></p>
-        <span class="footer-divider">·</span>
         <p>点击卡片播放音标发音</p>
       </div>
     </footer>
