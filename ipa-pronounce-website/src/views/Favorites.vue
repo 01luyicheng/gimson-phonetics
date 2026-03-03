@@ -94,6 +94,7 @@
  */
 
 import { computed, onMounted, onUnmounted, watch } from 'vue';
+import { ElMessageBox } from 'element-plus';
 import { usePhonemeStore } from '@/stores/phonemes';
 import PhonemeCard from '@/components/PhonemeCard.vue';
 
@@ -155,13 +156,10 @@ watch(favoriteConsonants, (newVal, oldVal) => {
   }
 })
 
-const clearAllFavorites = () => {
+const clearAllFavorites = async () => {
   if (import.meta.env.DEV) {
     console.log('%c━━━━━━━━━━━━━━━━ 清空收藏 ━━━━━━━━━━━━━━━━', 'color: #ef4444; font-weight: bold;')
     console.log('%c🗑️ 用户点击清空收藏按钮', 'color: #ef4444; font-weight: bold;')
-    console.log(`%c📊 当前收藏数量: ${favoritePhonemes.value.length}`, 'color: #64748b;')
-    console.log(`%c📊 元音: ${favoriteVowels.value.length} 个`, 'color: #64748b;')
-    console.log(`%c📊 辅音: ${favoriteConsonants.value.length} 个`, 'color: #64748b;')
   }
   
   if (favoritePhonemes.value.length === 0) {
@@ -175,7 +173,17 @@ const clearAllFavorites = () => {
     console.log('%c⏳ 弹出确认对话框...', 'color: #f59e0b;')
   }
   
-  if (confirm('确定要清空所有收藏吗？此操作不可撤销。')) {
+  try {
+    await ElMessageBox.confirm(
+      '确定要清空所有收藏吗？此操作不可撤销。',
+      '确认清空',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    
     if (import.meta.env.DEV) {
       console.log('%c✅ 用户确认清空收藏', 'color: #ef4444;')
       console.log(`%c🗑️ 正在清空 ${favoritePhonemes.value.length} 个收藏...`, 'color: #ef4444;')
@@ -188,7 +196,7 @@ const clearAllFavorites = () => {
       console.log(`%c✅ 已清空 ${beforeCount} 个收藏`, 'color: #10b981;')
       console.log('%c💾 localStorage 已更新', 'color: #10b981;')
     }
-  } else {
+  } catch {
     if (import.meta.env.DEV) {
       console.log('%c❌ 用户取消清空收藏', 'color: #64748b;')
     }

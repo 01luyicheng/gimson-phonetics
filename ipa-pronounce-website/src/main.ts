@@ -1,29 +1,19 @@
-/**
- * 应用入口文件
- * 文件用途：Vue应用初始化、插件注册、全局配置
- * 创建日期：2026-02-17
- * 输入：无
- * 输出：挂载完成的Vue应用实例
- * 依赖：vue@3.x, pinia@2.x, vue-router@4.x, element-plus@2.x
- */
-
 import './assets/main.css'
 
 import { createApp, version as vueVersion } from 'vue'
 import { createPinia } from 'pinia'
-import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
 import App from './App.vue'
 import router from './router'
-import { initAllMonitors, logger, logStorageUsage, startFPSMonitor, logMemoryUsage } from './utils/logger'
+import { initAllMonitors, logger, logStorageUsage, logMemoryUsage } from './utils/logger'
 
 const startTime = performance.now()
 const routerMode = router.options.history.constructor.name
 
 console.log('%c╔════════════════════════════════════════════════════════════╗', 'color: #3b82f6;')
-console.log('%c║        🚀 英语音标点读应用启动中...                          ║', 'color: #3b82f6; font-size: 14px; font-weight: bold;')
+console.log('%c║        🚀 Gimson音标点读应用启动中...                          ║', 'color: #3b82f6; font-size: 14px; font-weight: bold;')
 console.log('%c╚════════════════════════════════════════════════════════════╝', 'color: #3b82f6;')
 console.log('%c━━━━━━━━━━━━━━━━ 环境信息 ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
 console.log(`%c📦 应用版本: ${import.meta.env.VITE_APP_VERSION || 'unknown'}`, 'color: #10b981;')
@@ -78,10 +68,6 @@ console.log('%c⏳ 正在安装 Vue Router...', 'color: #f59e0b;')
 app.use(router)
 console.log('%c✅ Vue Router 安装完成', 'color: #10b981;')
 
-console.log('%c⏳ 正在安装 Element Plus...', 'color: #f59e0b;')
-app.use(ElementPlus)
-console.log('%c✅ Element Plus 安装完成', 'color: #10b981;')
-
 console.log('%c━━━━━━━━━━━━━━━━ 应用挂载 ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
 console.log('%c⏳ 正在挂载应用到 #app...', 'color: #f59e0b;')
 
@@ -100,7 +86,7 @@ console.log('%c━━━━━━━━━━━━━━━━ 性能统计 ━
 console.log(`%c⏱️ 总启动时间: ${totalTime}ms`, 'color: #10b981;')
 console.log(`%c⏱️ 挂载时间: ${mountTime}ms`, 'color: #10b981;')
 console.log(`%c💾 内存使用: ${(performance as any).memory?.usedJSHeapSize ? `${((performance as any).memory.usedJSHeapSize / 1024 / 1024).toFixed(2)}MB` : 'N/A'}`, 'color: #10b981;')
-// 安全修复：全局调试变量仅在开发环境暴露，避免生产环境安全风险
+
 if (import.meta.env.DEV) {
   console.log('%c━━━━━━━━━━━━━━━━ 调试提示 ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
   console.log('%c💡 提示: 使用 window.__APP__ 访问应用实例', 'color: #64748b; font-style: italic;')
@@ -116,11 +102,9 @@ if (import.meta.env.DEV) {
   console.log('%c━━━━━━━━━━━━━━━━ 监控器初始化 ━━━━━━━━━━━━━━━━', 'color: #ec4899; font-weight: bold;')
   console.log('%c⏳ 正在初始化全局监控器...', 'color: #f59e0b;')
 
-  // 性能监控器仅在开发环境启用，避免生产环境资源消耗
   initAllMonitors({ fps: true, memory: true })
 }
 
-// 开发环境专用调试日志
 if (import.meta.env.DEV) {
   console.log('%c⏳ 正在记录localStorage使用情况...', 'color: #f59e0b;')
   logStorageUsage()
@@ -142,6 +126,6 @@ logger.info(`运行模式: ${import.meta.env.MODE}`)
 logger.info(`基础URL: ${import.meta.env.BASE_URL}`)
 
 console.log('%c╔════════════════════════════════════════════════════════════╗', 'color: #10b981;')
-console.log('%c║     🎉 欢迎使用英语音标点读应用！                          ║', 'color: #10b981; font-weight: bold;')
+console.log('%c║     🎉 欢迎使用Gimson音标点读应用！                          ║', 'color: #10b981; font-weight: bold;')
 console.log('%c║     打开控制台可以查看详细的调试日志                        ║', 'color: #10b981;')
 console.log('%c╚════════════════════════════════════════════════════════════╝', 'color: #10b981;')
