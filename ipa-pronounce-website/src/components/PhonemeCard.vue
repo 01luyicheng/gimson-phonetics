@@ -49,6 +49,13 @@
     <div class="card-body">
       <div class="symbol-section">
         <span class="phoneme-symbol">{{ phoneme.symbol }}</span>
+        <!-- 加载指示器 -->
+        <div class="loading-indicator" v-if="isLoading">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <!-- 播放指示器 -->
         <div class="playing-indicator" v-if="isPlaying || isLooping">
           <span></span>
           <span></span>
@@ -101,6 +108,7 @@ import { usePhonemeStore } from '@/stores/phonemes';
 import type { Phoneme } from '@/stores/phonemes';
 import { getCategoryLabel } from '@/data/ipa-data';
 import { logger, logUserAction, logComponentMount, logComponentUnmount, createPerformanceTracker } from '@/utils/logger';
+import { ElMessage } from 'element-plus';
 
 const props = defineProps<{
   phoneme: Phoneme
@@ -122,12 +130,17 @@ const store = usePhonemeStore();
 const isPlaying = computed(() => store.isCurrentPlaying(props.phoneme.symbol));
 const isLooping = computed(() => store.isCurrentLooping(props.phoneme.symbol));
 const isFavorite = computed(() => store.isFavorite(props.phoneme.symbol));
+const isLoading = ref(false);
 
 watch(isPlaying, (newVal, oldVal) => {
   if (import.meta.env.DEV) {
     console.log(`%c━━━━━━━━━━━━━━━━ ${props.phoneme.symbol} 播放状态 ━━━━━━━━━━━━━━━━`, 'color: #3b82f6;')
-    console.log(`%c🔊 ${props.phoneme.symbol} 播放状态: ${oldVal ? '播放中' : '已停止'} → ${newVal ? '播放中' : '已停止'}`, 'color: #3b82f6;')
-    console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
+    console.log(`%c🔊 ${props.phoneme.symbol} 播放状态：${oldVal ? '播放中' : '已停止'} → ${newVal ? '播放中' : '已停止'}`, 'color: #3b82f6;')
+    console.log(`%c   卡片 ID: ${cardId}`, 'color: #64748b;')
+  }
+  // 当开始播放时，停止 loading 状态
+  if (newVal) {
+    isLoading.value = false;
   }
 })
 
@@ -300,21 +313,31 @@ const handleFavorite = () => {
     currentFavoriteState: isFavorite.value ? '已收藏' : '未收藏',
     cardId: cardId
   })
-  
+
   if (import.meta.env.DEV) {
     console.log(`%c⭐ 收藏按钮点击: ${props.phoneme.symbol}`, 'color: #f59e0b; font-weight: bold;')
     console.log(`%c   卡片ID: ${cardId}`, 'color: #64748b;')
     console.log(`%c   当前收藏状态: ${isFavorite.value ? '已收藏' : '未收藏'}`, 'color: #64748b;')
   }
-  
-  if (isFavorite.value) {
+
+  const wasFavorite = isFavorite.value;
+
+  if (wasFavorite) {
     logger.info(`取消收藏: ${props.phoneme.symbol}`)
   } else {
     logger.success(`添加收藏: ${props.phoneme.symbol}`)
   }
-  
+
   store.toggleFavorite(props.phoneme.symbol);
-  
+
+  // 显示收藏/取消收藏提示
+  ElMessage({
+    message: wasFavorite ? `已取消收藏 ${props.phoneme.symbol}` : `已收藏 ${props.phoneme.symbol}`,
+    type: wasFavorite ? 'info' : 'success',
+    duration: 2000,
+    offset: 20
+  });
+
   if (navigator.vibrate && window.matchMedia('(pointer: coarse)').matches) {
     navigator.vibrate(20);
     logger.debug('触觉反馈已触发 (20ms)')
@@ -705,6 +728,49 @@ onUnmounted(() => {
   line-height: 1;
   color: var(--text-primary);
   transition: color 0.3s ease;
+}
+
+/* 加载指示器 */
+.loading-indicator {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  height: 16px;
+}
+
+.loading-indicator span {
+  width: 3px;
+  background: #f59e0b;
+  border-radius: 2px;
+  animation: loadingWave 0.8s ease-in-out infinite;
+}
+
+.loading-indicator span:nth-child(1) {
+  height: 6px;
+  animation-delay: 0s;
+}
+
+.loading-indicator span:nth-child(2) {
+  height: 12px;
+  animation-delay: 0.2s;
+}
+
+.loading-indicator span:nth-child(3) {
+  height: 8px;
+  animation-delay: 0.4s;
+}
+
+@keyframes loadingWave {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.4);
+  }
 }
 
 /* 元音和辅音的默认颜色 */

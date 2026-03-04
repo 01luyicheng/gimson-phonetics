@@ -21,6 +21,16 @@ import { ipaPhonemes, getAudioPath, searchPhonemes, vowels, consonants } from '@
 import { logger, setupAudioLogging } from '@/utils/logger';
 
 /**
+ * 扩展 Window 接口以支持 webkitAudioContext
+ * webkitAudioContext 是 Safari 和旧版 Chrome 中的前缀实现
+ */
+declare global {
+  interface Window {
+    webkitAudioContext?: typeof AudioContext;
+  }
+}
+
+/**
  * 音标数据类型定义
  */
 export interface Phoneme {
@@ -55,6 +65,8 @@ export interface PhonemeStore {
   playAllIndex: number;
   savedPlayAllIndex: number;
   isWechatBrowser: boolean;
+  isLoading: boolean;
+  loadingPhonemeSymbol: string | null;
 }
 
 if (import.meta.env.DEV) {
@@ -82,6 +94,11 @@ export const usePhonemeStore = defineStore('phonemes', () => {
   const playAllMode = ref(false);
   const playAllIndex = ref(0);
   const savedPlayAllIndex = ref(0);
+  const isLoading = ref(false);
+  const loadingPhonemeSymbol = ref<string | null>(null);
+  
+  // 播放全部模式的取消标记
+  let playAllCancelToken: { cancelled: boolean } | null = null;
   
   // 微信浏览器音频上下文（用于解决自动播放限制）
   const audioContext = ref<AudioContext | null>(null);
@@ -116,42 +133,9 @@ export const usePhonemeStore = defineStore('phonemes', () => {
       }
     }
     
-    const savedFavorites = localStorage.getItem('ipa-favorites');
-    const savedProgress = localStorage.getItem('ipa-progress');
-    const savedPlayAllIndexStr = localStorage.getItem('ipa-playall-index');
-    if (savedFavorites) {
-      try {
-        favorites.value = JSON.parse(savedFavorites);
-        if (import.meta.env.DEV) {
-          console.log(`%c⭐ 已加载收藏: ${favorites.value.length} 个`, 'color: #10b981;')
-        }
-      } catch (e) {
-        logger.error('解析收藏数据失败', e);
-        favorites.value = [];
-      }
-    }
-    if (savedProgress) {
-      try {
-        progress.value = JSON.parse(savedProgress);
-        if (import.meta.env.DEV) {
-          console.log(`%c📈 已加载学习进度: ${progress.value.length} 个音标`, 'color: #10b981;')
-        }
-      } catch (e) {
-        logger.error('解析进度数据失败', e);
-        progress.value = [];
-      }
-    }
-    if (savedPlayAllIndexStr !== null) {
-      const parsedIndex = parseInt(savedPlayAllIndexStr, 10);
-      if (!isNaN(parsedIndex) && parsedIndex >= 0) {
-        savedPlayAllIndex.value = parsedIndex;
-        if (import.meta.env.DEV) {
-          console.log(`%c🎵 已加载播放位置: 第 ${parsedIndex + 1} 个音标`, 'color: #10b981;')
-        }
-      }
-    }
+    loadFromLocalStorage();
     if (import.meta.env.DEV) {
-      console.log(`%c📋 总音标数量: ${phonemes.value.length} (元音: ${vowels.length}, 辅音: ${consonants.length})`, 'color: #10b981;')
+      console.log(`%c📊 存储可用性：${isLocalStorageAvailable ? 'localStorage' : '内存存储'}`, 'color: #64748b;')
     }
     
     // 清理旧的事件监听器，避免内存泄漏
@@ -196,13 +180,119 @@ export const usePhonemeStore = defineStore('phonemes', () => {
     }
   };
 
+  // 内存存储作为降级方案
+  const memoryStorage = {
+    favorites: [] as string[],
+    progress: [] as string[],
+    playAllIndex: 0
+  };
+  
+  let isLocalStorageAvailable = true;
+
+  /**
+   * 检查 localStorage 可用性
+   * 每次保存前都检查，不永久放弃 localStorage
+   */
+  const checkLocalStorageAvailability = () => {
+    try {
+      const test = '__localStorage_test__';
+      localStorage.setItem(test, test);
+      localStorage.removeItem(test);
+      if (!isLocalStorageAvailable) {
+        logger.success('localStorage 已恢复可用');
+      }
+      isLocalStorageAvailable = true;
+      return true;
+    } catch (e) {
+      if (isLocalStorageAvailable) {
+        logger.warning('localStorage 不可用，将使用内存存储');
+      }
+      isLocalStorageAvailable = false;
+      return false;
+    }
+  };
+
   const saveToLocalStorage = () => {
+    // 每次保存前都检查 localStorage 可用性
+    if (!checkLocalStorageAvailability()) {
+      // 降级到内存存储
+      memoryStorage.favorites = [...favorites.value];
+      memoryStorage.progress = [...progress.value];
+      memoryStorage.playAllIndex = savedPlayAllIndex.value;
+      return;
+    }
+    
     try {
       localStorage.setItem('ipa-favorites', JSON.stringify(favorites.value));
       localStorage.setItem('ipa-progress', JSON.stringify(progress.value));
       localStorage.setItem('ipa-playall-index', savedPlayAllIndex.value.toString());
     } catch (e) {
-      console.error('%c❌ 保存到localStorage失败:', 'color: #ef4444;', e);
+      console.error('%c❌ 保存到 localStorage 失败:', 'color: #ef4444;', e);
+      isLocalStorageAvailable = false;
+      memoryStorage.favorites = [...favorites.value];
+      memoryStorage.progress = [...progress.value];
+      memoryStorage.playAllIndex = savedPlayAllIndex.value;
+      logger.warning('已切换到内存存储模式');
+    }
+  };
+
+  const loadFromLocalStorage = () => {
+    try {
+      const savedFavorites = localStorage.getItem('ipa-favorites');
+      const savedProgress = localStorage.getItem('ipa-progress');
+      const savedPlayAllIndexStr = localStorage.getItem('ipa-playall-index');
+      
+      if (savedFavorites) {
+        try {
+          const parsed = JSON.parse(savedFavorites);
+          if (Array.isArray(parsed)) {
+            favorites.value = parsed;
+            if (import.meta.env.DEV) {
+              console.log(`%c⭐ 已加载收藏：${favorites.value.length} 个`, 'color: #10b981;')
+            }
+          } else {
+            logger.warning('收藏数据格式不正确，使用空数组');
+            favorites.value = [];
+          }
+        } catch (e) {
+          logger.error('解析收藏数据失败', e);
+          favorites.value = [];
+        }
+      }
+      if (savedProgress) {
+        try {
+          const parsed = JSON.parse(savedProgress);
+          if (Array.isArray(parsed)) {
+            progress.value = parsed;
+            if (import.meta.env.DEV) {
+              console.log(`%c📈 已加载学习进度：${progress.value.length} 个音标`, 'color: #10b981;')
+            }
+          } else {
+            logger.warning('进度数据格式不正确，使用空数组');
+            progress.value = [];
+          }
+        } catch (e) {
+          logger.error('解析进度数据失败', e);
+          progress.value = [];
+        }
+      }
+      if (savedPlayAllIndexStr !== null) {
+        const parsedIndex = parseInt(savedPlayAllIndexStr, 10);
+        if (!isNaN(parsedIndex) && parsedIndex >= 0) {
+          savedPlayAllIndex.value = parsedIndex;
+          if (import.meta.env.DEV) {
+            console.log(`%c🎵 已加载播放位置：第 ${parsedIndex + 1} 个音标`, 'color: #10b981;')
+          }
+        }
+      }
+    } catch (e) {
+      console.error('%c❌ 从 localStorage 加载失败:', 'color: #ef4444;', e);
+      // 加载失败时降级到内存存储，不永久放弃 localStorage
+      isLocalStorageAvailable = false;
+    }
+    
+    if (import.meta.env.DEV) {
+      console.log(`%c📋 总音标数量：${phonemes.value.length} (元音：${vowels.length}, 辅音：${consonants.length})`, 'color: #10b981;')
     }
   };
 
@@ -227,7 +317,7 @@ export const usePhonemeStore = defineStore('phonemes', () => {
   const initAudioContext = () => {
     if (isWechatBrowser.value && !audioContext.value) {
       try {
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (AudioContextClass) {
           audioContext.value = new AudioContextClass();
           // 尝试恢复音频上下文（如果处于suspended状态）
@@ -247,13 +337,30 @@ export const usePhonemeStore = defineStore('phonemes', () => {
    */
   const cleanupAudio = () => {
     if (currentAudio.value) {
+      logger.debug('清理音频资源')
+      // 暂停播放
       currentAudio.value.pause();
       currentAudio.value.currentTime = 0;
+      
+      // 移除所有可能的事件监听器，避免内存泄漏
       currentAudio.value.onended = null;
       currentAudio.value.onerror = null;
       currentAudio.value.onloadeddata = null;
+      currentAudio.value.oncanplay = null;
+      currentAudio.value.oncanplaythrough = null;
+      currentAudio.value.onprogress = null;
+      currentAudio.value.ontimeupdate = null;
       currentAudio.value.onwaiting = null;
       currentAudio.value.onstalled = null;
+      currentAudio.value.onloadstart = null;
+      currentAudio.value.onemptied = null;
+      
+      // 清空 src 属性
+      currentAudio.value.src = '';
+      
+      // 调用 load() 强制释放资源
+      currentAudio.value.load();
+      
       currentAudio.value = null;
     }
   };
@@ -278,6 +385,10 @@ export const usePhonemeStore = defineStore('phonemes', () => {
   const stopAllPlayback = () => {
     if (import.meta.env.DEV) {
       console.log('%c⏹️ 停止所有播放', 'color: #f59e0b;')
+    }
+    // 修复：设置取消标记，通知 playNext 停止播放
+    if (playAllCancelToken) {
+      playAllCancelToken.cancelled = true;
     }
     if (playAllMode.value && playAllIndex.value > 0) {
       savedPlayAllIndex.value = playAllIndex.value;
@@ -365,6 +476,10 @@ export const usePhonemeStore = defineStore('phonemes', () => {
     currentPhoneme.value = phoneme;
     isPlaying.value = true;
     
+    // 设置加载状态
+    isLoading.value = true;
+    loadingPhonemeSymbol.value = phoneme.symbol;
+    
     if (loop) {
       isLooping.value = true;
       loopPhonemeSymbol.value = phoneme.symbol;
@@ -385,10 +500,13 @@ export const usePhonemeStore = defineStore('phonemes', () => {
 
     audio.onloadeddata = () => {
       const loadTime = performance.now() - audioLoadStart
-      logger.performance(`音频加载完成: ${phoneme.symbol} (${loadTime.toFixed(2)}ms)`)
+      // 清除加载状态
+      isLoading.value = false;
+      loadingPhonemeSymbol.value = null;
+      logger.performance(`音频加载完成：${phoneme.symbol} (${loadTime.toFixed(2)}ms)`)
       if (import.meta.env.DEV) {
-        console.log(`%c📊 音频时长: ${audio.duration.toFixed(2)}s`, 'color: #64748b;')
-        console.log(`%c📊 音频状态: readyState=${audio.readyState}`, 'color: #64748b;')
+        console.log(`%c📊 音频时长：${audio.duration.toFixed(2)}s`, 'color: #64748b;')
+        console.log(`%c📊 音频状态：readyState=${audio.readyState}`, 'color: #64748b;')
       }
     }
 
@@ -402,11 +520,47 @@ export const usePhonemeStore = defineStore('phonemes', () => {
     };
 
     audio.onerror = () => {
-      logger.error(`音频加载失败: ${phoneme.audioFile}`)
-      if (import.meta.env.DEV) {
-        console.error(`%c❌ 错误代码: ${audio.error?.code}`, 'color: #ef4444;')
-        console.error(`%c❌ 错误消息: ${audio.error?.message}`, 'color: #ef4444;')
+      // 清除加载状态
+      isLoading.value = false;
+      loadingPhonemeSymbol.value = null;
+      
+      // 区分不同的错误类型
+      const errorCode = audio.error?.code;
+      let errorMessage = '音频加载失败';
+      let errorType = 'unknown';
+      
+      if (errorCode === 1) {
+        errorType = 'network';
+        errorMessage = '网络错误，音频文件无法下载';
+      } else if (errorCode === 2) {
+        errorType = 'decode';
+        errorMessage = '音频文件解码失败，文件格式可能不正确';
+      } else if (errorCode === 3) {
+        errorType = 'support';
+        errorMessage = '浏览器不支持此音频格式';
+      } else if (errorCode === 4) {
+        errorType = 'notfound';
+        errorMessage = '音频文件不存在';
       }
+      
+      logger.error(`${errorMessage}: ${phoneme.audioFile} (错误类型：${errorType})`)
+      if (import.meta.env.DEV) {
+        console.error(`%c❌ 错误代码：${errorCode}`, 'color: #ef4444;')
+        console.error(`%c❌ 错误消息：${audio.error?.message}`, 'color: #ef4444;')
+        console.error(`%c❌ 错误类型：${errorType}`, 'color: #ef4444;')
+      }
+      
+      // 存储错误信息供组件使用
+      const errorInfo = {
+        symbol: phoneme.symbol,
+        message: errorMessage,
+        type: errorType,
+        timestamp: Date.now()
+      };
+      
+      // 触发自定义事件通知组件
+      window.dispatchEvent(new CustomEvent('audio-error', { detail: errorInfo }));
+      
       stopCurrentAudio();
     };
 
@@ -420,6 +574,9 @@ export const usePhonemeStore = defineStore('phonemes', () => {
 
     const playSuccess = await playAudioWithWechatCompat(audio);
     if (!playSuccess) {
+      // 修复：重置加载状态
+      isLoading.value = false;
+      loadingPhonemeSymbol.value = null;
       stopCurrentAudio();
     }
 
@@ -482,10 +639,37 @@ export const usePhonemeStore = defineStore('phonemes', () => {
   };
 
   /**
+   * 显示播放全部进度
+   * @param current 当前播放位置
+   * @param total 总音标数量
+   * @param symbol 当前音标符号
+   */
+  const showPlayAllProgress = (current: number, total: number, symbol: string) => {
+    // 更新页面标题显示进度
+    document.title = `(${current}/${total}) ${symbol} - 英语音标点读`;
+  };
+
+  /**
+   * 关闭播放全部进度并恢复页面标题
+   */
+  const closePlayAllProgress = () => {
+    document.title = '英语音标点读';
+  };
+
+  /**
    * 播放全部音标
-   * 按顺序播放所有音标，每个音标之间有200ms间隔
+   * 按顺序播放所有音标，每个音标之间有500ms间隔
    * 可被中断停止，停止后下次从上次位置继续播放
    * 已针对微信浏览器优化
+   * 
+   * 修复记录：
+   * - 修复了音频事件竞态条件导致的跳过问题
+   * - 添加了播放状态锁防止重复调用
+   * - 等待音频加载完成后再播放
+   * - 统一处理播放完成逻辑
+   * - 修复：确保 isProcessing 锁在所有路径下正确释放
+   * - 修复：移除重复的事件处理器定义
+   * - 修复：增强取消标记检查覆盖所有异步操作
    */
   const playAllPhonemes = async () => {
     if (import.meta.env.DEV) {
@@ -496,10 +680,13 @@ export const usePhonemeStore = defineStore('phonemes', () => {
     if (playAllMode.value) {
       logger.warning('停止播放全部模式')
       stopAllPlayback();
+      closePlayAllProgress();
       return;
     }
     
-    initAudioContext();
+    // 创建新的取消标记
+    const cancelToken = { cancelled: false };
+    playAllCancelToken = cancelToken;
     
     cleanupAudio();
     isPlaying.value = false;
@@ -529,35 +716,81 @@ export const usePhonemeStore = defineStore('phonemes', () => {
       }
     }
     
-    const PLAY_INTERVAL = 200;
+    // 增加播放间隔，确保音频有足够时间加载和播放
+    const PLAY_INTERVAL = 500;
+    // 音频加载超时时间（10秒）
+    const LOAD_TIMEOUT = 10000;
     if (import.meta.env.DEV) {
       console.log(`%c📊 播放间隔: ${PLAY_INTERVAL}ms`, 'color: #64748b;')
+      console.log(`%c📊 加载超时: ${LOAD_TIMEOUT}ms`, 'color: #64748b;')
     }
     
     const playStartTime = performance.now()
     let playedCount = 0
+    // 播放状态锁，防止竞态条件导致的重复调用
+    let isProcessing = false
     
     const playNext = async () => {
-      if (!playAllMode.value || playAllIndex.value >= allPhonemes.length) {
+      // 检查取消标记 - 在函数入口处立即检查
+      if (cancelToken.cancelled) {
+        logger.info('播放全部模式已取消，停止播放');
+        stopAllPlayback();
+        closePlayAllProgress();
+        return;
+      }
+
+      // 检查播放模式状态
+      if (!playAllMode.value) {
+        if (import.meta.env.DEV) {
+          console.log('%c⏹️ 播放模式已关闭，停止播放', 'color: #f59e0b;')
+        }
+        closePlayAllProgress();
+        return;
+      }
+
+      // 检查是否播放完成
+      if (playAllIndex.value >= allPhonemes.length) {
         const totalTime = performance.now() - playStartTime
         logger.success(`播放全部完成！共播放 ${playedCount} 个音标，总耗时 ${(totalTime / 1000).toFixed(1)}s`)
         stopAllPlayback();
+        closePlayAllProgress();
         return;
       }
-      
+
+      // 防止重复调用（竞态条件保护）
+      if (isProcessing) {
+        if (import.meta.env.DEV) {
+          console.log('%c⏳ 正在处理中，跳过本次调用', 'color: #f59e0b;')
+        }
+        return;
+      }
+      isProcessing = true;
+
+      // 再次检查取消标记（获取锁后）
+      if (cancelToken.cancelled || !playAllMode.value) {
+        isProcessing = false;
+        stopAllPlayback();
+        closePlayAllProgress();
+        return;
+      }
+
       cleanupAudio();
       
       const phoneme = allPhonemes[playAllIndex.value];
       if (!phoneme) {
         logger.error(`无法获取音标，索引: ${playAllIndex.value}`)
         playAllIndex.value++;
+        isProcessing = false;
         setTimeout(() => {
-          if (playAllMode.value) {
+          if (playAllMode.value && !cancelToken.cancelled) {
             playNext();
           }
         }, PLAY_INTERVAL);
         return;
       }
+      
+      // 显示播放进度
+      showPlayAllProgress(playAllIndex.value + 1, allPhonemes.length, phoneme.symbol);
       
       if (import.meta.env.DEV) {
         console.log('%c━━━━━━━━━━━━━━━━ 播放进度 ━━━━━━━━━━━━━━━━', 'color: #3b82f6;')
@@ -578,6 +811,69 @@ export const usePhonemeStore = defineStore('phonemes', () => {
         saveToLocalStorage();
       }
       
+      // 标记是否已经处理过（防止事件竞态）
+      let hasHandled = false;
+      
+      // 统一处理播放完成的逻辑
+      const handleComplete = (success: boolean) => {
+        // 防止重复处理（竞态条件保护）
+        if (hasHandled) {
+          if (import.meta.env.DEV) {
+            console.log('%c⚠️ 已经处理过，跳过重复调用', 'color: #f59e0b;')
+          }
+          return;
+        }
+        hasHandled = true;
+        
+        if (success) {
+          playedCount++;
+        }
+        
+        playAllIndex.value++;
+        
+        // 检查是否还有更多音标需要播放
+        if (playAllMode.value && playAllIndex.value < allPhonemes.length && !cancelToken.cancelled) {
+          savedPlayAllIndex.value = playAllIndex.value;
+          saveToLocalStorage();
+          currentPhoneme.value = null;
+          isPlaying.value = false;
+          currentAudio.value = null;
+          isProcessing = false; // 释放处理锁
+          
+          setTimeout(() => {
+            // 在调度下一次播放前再次检查取消标记
+            if (playAllMode.value && !cancelToken.cancelled) {
+              playNext();
+            }
+          }, PLAY_INTERVAL);
+        } else {
+          // 播放完成或已取消
+          savedPlayAllIndex.value = 0;
+          saveToLocalStorage();
+          if (playAllIndex.value >= allPhonemes.length) {
+            const totalTime = performance.now() - playStartTime
+            logger.success(`播放全部完成，已重置播放位置，共播放 ${playedCount} 个音标，总耗时 ${(totalTime / 1000).toFixed(1)}s`)
+          }
+          isProcessing = false; // 确保释放处理锁
+          stopAllPlayback();
+          closePlayAllProgress();
+        }
+      };
+      
+      // 设置加载超时保护
+      const loadTimeoutId = setTimeout(() => {
+        if (!hasHandled) {
+          logger.warning(`音频加载超时: ${phoneme.symbol}`)
+          handleComplete(false);
+        }
+      }, LOAD_TIMEOUT);
+      
+      // 清理超时定时器的辅助函数
+      const clearLoadTimeout = () => {
+        clearTimeout(loadTimeoutId);
+      };
+      
+      // 音频加载完成事件
       audio.onloadeddata = () => {
         const loadTime = performance.now() - audioLoadStart
         if (import.meta.env.DEV) {
@@ -585,54 +881,64 @@ export const usePhonemeStore = defineStore('phonemes', () => {
         }
       }
       
+      // 音频播放结束事件 - 统一使用 handleComplete
       audio.onended = () => {
-        playedCount++
-        playAllIndex.value++;
-        if (playAllMode.value && playAllIndex.value < allPhonemes.length) {
-          savedPlayAllIndex.value = playAllIndex.value;
-          saveToLocalStorage();
-          currentPhoneme.value = null;
-          isPlaying.value = false;
-          currentAudio.value = null;
-          setTimeout(() => {
-            if (playAllMode.value) {
-              playNext();
-            }
-          }, PLAY_INTERVAL);
-        } else {
-          savedPlayAllIndex.value = 0;
-          saveToLocalStorage();
-          logger.success('播放全部完成，已重置播放位置')
-          stopAllPlayback();
+        clearLoadTimeout();
+        if (import.meta.env.DEV) {
+          console.log(`%c✅ 播放完成: ${phoneme.symbol}`, 'color: #10b981;')
         }
+        handleComplete(true);
       };
       
+      // 音频错误事件 - 统一使用 handleComplete
       audio.onerror = () => {
-        logger.error(`音频加载失败: ${phoneme.audioFile}`)
-        playAllIndex.value++;
-        savedPlayAllIndex.value = playAllIndex.value;
-        saveToLocalStorage();
-        setTimeout(() => {
-          if (playAllMode.value) {
-            playNext();
-          }
-        }, PLAY_INTERVAL);
+        clearLoadTimeout();
+        const errorCode = audio.error?.code;
+        let errorType = 'unknown';
+        if (errorCode === 1) errorType = 'network';
+        else if (errorCode === 2) errorType = 'decode';
+        else if (errorCode === 3) errorType = 'support';
+        else if (errorCode === 4) errorType = 'notfound';
+        logger.error(`音频加载失败: ${phoneme.audioFile} (错误类型: ${errorType})`)
+        handleComplete(false);
       };
       
-      const playSuccess = await playAudioWithWechatCompat(audio);
-      if (!playSuccess) {
-        logger.warning(`播放失败，跳过: ${phoneme.symbol}`)
-        playAllIndex.value++;
-        savedPlayAllIndex.value = playAllIndex.value;
-        saveToLocalStorage();
-        setTimeout(() => {
-          if (playAllMode.value) {
-            playNext();
-          }
-        }, PLAY_INTERVAL);
+      // 尝试播放音频
+      try {
+        // 再次检查取消标记（播放前）
+        if (cancelToken.cancelled || !playAllMode.value) {
+          clearLoadTimeout();
+          isProcessing = false;
+          stopAllPlayback();
+          closePlayAllProgress();
+          return;
+        }
+        
+        const playSuccess = await playAudioWithWechatCompat(audio);
+        
+        // 播放后检查取消标记
+        if (cancelToken.cancelled || !playAllMode.value) {
+          clearLoadTimeout();
+          isProcessing = false;
+          stopAllPlayback();
+          closePlayAllProgress();
+          return;
+        }
+        
+        if (!playSuccess) {
+          clearLoadTimeout();
+          logger.warning(`播放失败，跳过: ${phoneme.symbol}`)
+          handleComplete(false);
+        }
+        // 如果 playSuccess 为 true，则等待 onended 或 onerror 事件触发 handleComplete
+      } catch (err) {
+        clearLoadTimeout();
+        logger.error(`播放异常: ${phoneme.symbol}`, err)
+        handleComplete(false);
       }
     };
     
+    // 启动播放序列
     playNext();
   };
 

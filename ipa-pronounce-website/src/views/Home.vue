@@ -67,6 +67,9 @@
           placeholder="搜索音标、单词..."
           class="search-input"
           enterkeyhint="search"
+          @focus="handleSearchFocus"
+          @blur="handleSearchBlur"
+          @keydown="handleSearchKeydown"
         />
         <button v-if="searchQuery" class="clear-btn" @click="clearSearch" aria-label="清除搜索">
           <svg viewBox="0 0 24 24" fill="currentColor">
@@ -269,12 +272,13 @@
  * 创建日期：2026-02-17
  * 输入：无
  * 输出：音标列表页面
- * 依赖：Vue 3, Pinia store, PhonemeCard组件
+ * 依赖：Vue 3, Pinia store, PhonemeCard 组件
  */
 
 import { computed, onMounted, watch, onUnmounted, ref } from 'vue';
 import { usePhonemeStore } from '@/stores/phonemes';
 import PhonemeCard from '@/components/PhonemeCard.vue';
+import { ElMessage } from 'element-plus';
 import {
   vowelCount,
   consonantCount,
@@ -286,6 +290,7 @@ import {
   nasals,
   approximants
 } from '@/data/ipa-data';
+import { logger } from '@/utils/logger';
 
 if (import.meta.env.DEV) {
   console.log('%c━━━━━━━━━━━━━━━━ Home.vue ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
@@ -293,8 +298,11 @@ if (import.meta.env.DEV) {
 }
 
 const store = usePhonemeStore();
-const searchInputRef = ref(null);
 const lastSearchTime = ref(0);
+
+// 音频错误事件处理函数引用（用于在 onUnmounted 中移除监听器）
+// 修复：将 handleAudioError 提升到外部作用域，避免闭包问题
+let audioErrorHandler = null;
 
 const INFO_CARD_COLLAPSED_KEY = 'ipa-info-card-collapsed';
 
@@ -408,7 +416,68 @@ const handleSearchBlur = () => {
   if (import.meta.env.DEV) {
     console.log('%c🎯 搜索框失去焦点', 'color: #64748b;')
   }
+  // 移动端键盘收起后，延迟滚动到页面顶部
+  handleKeyboardHide();
 }
+
+// 移动端键盘处理
+const windowHeight = ref(window.innerHeight);
+const isKeyboardVisible = ref(false);
+
+/**
+ * 检测键盘是否收起并处理页面滚动
+ * 原理：移动端键盘弹出时会改变窗口高度
+ */
+const handleResize = () => {
+  const currentHeight = window.innerHeight;
+  const heightDiff = windowHeight.value - currentHeight;
+  
+  // 如果高度差大于200px，认为是键盘弹出
+  if (heightDiff > 200) {
+    isKeyboardVisible.value = true;
+    if (import.meta.env.DEV) {
+      console.log('%c📱 键盘弹出', 'color: #f59e0b;')
+    }
+  } else if (isKeyboardVisible.value && heightDiff < 50) {
+    // 键盘收起
+    isKeyboardVisible.value = false;
+    if (import.meta.env.DEV) {
+      console.log('%c📱 键盘收起', 'color: #10b981;')
+    }
+    handleKeyboardHide();
+  }
+  
+  windowHeight.value = currentHeight;
+};
+
+/**
+ * 键盘收起后处理页面滚动
+ * 确保搜索结果显示在可视区域
+ */
+const handleKeyboardHide = () => {
+  // 延迟执行，确保键盘完全收起
+  setTimeout(() => {
+    // 如果正在搜索，滚动到搜索结果区域
+    if (searchQuery.value && filteredPhonemes.value.length > 0) {
+      const searchStatusEl = document.querySelector('.search-status');
+      if (searchStatusEl) {
+        searchStatusEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        logger.debug('键盘收起后滚动到搜索结果区域');
+      }
+    } else if (searchQuery.value && filteredPhonemes.value.length === 0) {
+      // 无搜索结果时滚动到空状态提示
+      const emptyStateEl = document.querySelector('.empty-state');
+      if (emptyStateEl) {
+        emptyStateEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        logger.debug('键盘收起后滚动到空状态提示');
+      }
+    } else {
+      // 非搜索状态时，滚动到页面顶部
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      logger.debug('键盘收起后滚动到页面顶部');
+    }
+  }, 100);
+};
 
 const handleSearchKeydown = (e) => {
   if (import.meta.env.DEV) {
@@ -424,33 +493,52 @@ onMounted(() => {
     console.log('%c━━━━━━━━━━━━━━━━ Home.vue 挂载 ━━━━━━━━━━━━━━━━', 'color: #10b981; font-weight: bold;')
     console.log('%c🏠 Home.vue 组件开始挂载...', 'color: #10b981;')
   }
-  
+
   const mountStartTime = performance.now()
-  
+
   if (import.meta.env.DEV) {
     console.log('%c⏳ 加载音标数据...', 'color: #f59e0b;')
     console.log(`%c📊 音标数据统计:`, 'color: #3b82f6;')
-    console.log(`%c   📊 元音总数: ${vowelCount}`, 'color: #10b981;')
-    console.log(`%c   📊 辅音总数: ${consonantCount}`, 'color: #10b981;')
-    console.log(`%c   📊 单元音: ${monophthongs.length} 个`, 'color: #10b981;')
-    console.log(`%c   📊 双元音: ${diphthongs.length} 个`, 'color: #10b981;')
-    console.log(`%c   📊 爆破音: ${plosives.length} 个`, 'color: #10b981;')
-    console.log(`%c   📊 摩擦音: ${fricatives.length} 个`, 'color: #10b981;')
-    console.log(`%c   📊 破擦音: ${affricates.length} 个`, 'color: #10b981;')
-    console.log(`%c   📊 鼻音: ${nasals.length} 个`, 'color: #10b981;')
-    console.log(`%c   📊 近音: ${approximants.length} 个`, 'color: #10b981;')
+    console.log(`%c   📊 元音总数：${vowelCount}`, 'color: #10b981;')
+    console.log(`%c   📊 辅音总数：${consonantCount}`, 'color: #10b981;')
+    console.log(`%c   📊 单元音：${monophthongs.length} 个`, 'color: #10b981;')
+    console.log(`%c   📊 双元音：${diphthongs.length} 个`, 'color: #10b981;')
+    console.log(`%c   📊 爆破音：${plosives.length} 个`, 'color: #10b981;')
+    console.log(`%c   📊 摩擦音：${fricatives.length} 个`, 'color: #10b981;')
+    console.log(`%c   📊 破擦音：${affricates.length} 个`, 'color: #10b981;')
+    console.log(`%c   📊 鼻音：${nasals.length} 个`, 'color: #10b981;')
+    console.log(`%c   📊 近音：${approximants.length} 个`, 'color: #10b981;')
   }
-  
+
   store.initializeStore();
-  
+
+  // 监听音频错误事件并显示用户友好的提示
+  // 修复：使用外部变量存储处理函数，确保 onUnmounted 能正确移除监听器
+  audioErrorHandler = (event) => {
+    const errorInfo = event.detail;
+    if (errorInfo) {
+      ElMessage({
+        message: errorInfo.message,
+        type: 'error',
+        duration: 3000,
+        offset: 20
+      });
+    }
+  };
+
+  window.addEventListener('audio-error', audioErrorHandler);
+
+  // 监听窗口大小变化，检测键盘弹出/收起
+  window.addEventListener('resize', handleResize);
+
   if (import.meta.env.DEV) {
     console.log('%c━━━━━━━━━━━━━━━━ Store 状态 ━━━━━━━━━━━━━━━━', 'color: #8b5cf6; font-weight: bold;')
-    console.log(`%c⭐ 收藏数量: ${store.favorites.length}`, 'color: #10b981;')
-    console.log(`%c📈 学习进度: ${store.progress.length} / ${store.phonemes.length}`, 'color: #10b981;')
-    console.log(`%c🔍 搜索内容: "${store.searchQuery || '空'}"`, 'color: #10b981;')
-    
+    console.log(`%c⭐ 收藏数量：${store.favorites.length}`, 'color: #10b981;')
+    console.log(`%c📈 学习进度：${store.progress.length} / ${store.phonemes.length}`, 'color: #10b981;')
+    console.log(`%c🔍 搜索内容："${store.searchQuery || '空'}"`, 'color: #10b981;')
+
     const mountEndTime = performance.now()
-    console.log(`%c⏱️ Home.vue 挂载耗时: ${(mountEndTime - mountStartTime).toFixed(2)}ms`, 'color: #10b981;')
+    console.log(`%c⏱️ Home.vue 挂载耗时：${(mountEndTime - mountStartTime).toFixed(2)}ms`, 'color: #10b981;')
     console.log('%c✅ Home.vue 组件挂载完成', 'color: #10b981; font-weight: bold;')
   }
 })
@@ -459,10 +547,20 @@ onUnmounted(() => {
   if (import.meta.env.DEV) {
     console.log('%c━━━━━━━━━━━━━━━━ Home.vue 卸载 ━━━━━━━━━━━━━━━━', 'color: #f59e0b; font-weight: bold;')
     console.log('%c👋 Home.vue 组件开始卸载...', 'color: #f59e0b;')
-    console.log(`%c📊 当前搜索内容: "${store.searchQuery || '空'}"`, 'color: #64748b;')
-    console.log(`%c📊 播放全部模式: ${store.playAllMode ? '开启' : '关闭'}`, 'color: #64748b;')
+    console.log(`%c📊 当前搜索内容："${store.searchQuery || '空'}"`, 'color: #64748b;')
+    console.log(`%c📊 播放全部模式：${store.playAllMode ? '开启' : '关闭'}`, 'color: #64748b;')
     console.log('%c✅ Home.vue 组件卸载完成', 'color: #f59e0b;')
   }
+
+  // 清理事件监听器
+  // 修复：使用外部变量 audioErrorHandler 移除监听器，确保正确清理
+  if (audioErrorHandler) {
+    window.removeEventListener('audio-error', audioErrorHandler);
+    audioErrorHandler = null;
+  }
+
+  // 清理 resize 事件监听器
+  window.removeEventListener('resize', handleResize);
 })
 </script>
 
