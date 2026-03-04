@@ -108,6 +108,7 @@ import { usePhonemeStore } from '@/stores/phonemes';
 import type { Phoneme } from '@/stores/phonemes';
 import { getCategoryLabel } from '@/data/ipa-data';
 import { logger, logUserAction, logComponentMount, logComponentUnmount, createPerformanceTracker } from '@/utils/logger';
+import { cleanupAudioElement } from '@/utils/audio';
 import { ElMessage } from 'element-plus';
 
 const props = defineProps<{
@@ -441,16 +442,12 @@ onMounted(() => {
  *   - 清空引用
  */
 const cleanupWordAudio = () => {
-  if (wordAudio.value) {
-    logger.debug('清理单词音频资源')
-    wordAudio.value.pause();
-    wordAudio.value.src = '';
-    wordAudio.value.load();
-    wordAudio.value.onloadeddata = null;
-    wordAudio.value.onerror = null;
-    wordAudio.value.onended = null;
-    wordAudio.value.onwaiting = null;
-    wordAudio.value.onstalled = null;
+  const wasCleaned = cleanupAudioElement(wordAudio.value, {
+    resetCurrentTime: false,
+    logMessage: '清理单词音频资源',
+    enableLog: true
+  });
+  if (wasCleaned) {
     wordAudio.value = null;
   }
 };

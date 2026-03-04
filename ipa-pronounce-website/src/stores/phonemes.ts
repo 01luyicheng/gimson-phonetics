@@ -19,6 +19,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { ipaPhonemes, getAudioPath, searchPhonemes, vowels, consonants } from '@/data/ipa-data';
 import { logger, setupAudioLogging } from '@/utils/logger';
+import { cleanupAudioElement } from '@/utils/audio';
 
 /**
  * 扩展 Window 接口以支持 webkitAudioContext
@@ -336,31 +337,12 @@ export const usePhonemeStore = defineStore('phonemes', () => {
    * 用于内部清理，不重置状态变量
    */
   const cleanupAudio = () => {
-    if (currentAudio.value) {
-      logger.debug('清理音频资源')
-      // 暂停播放
-      currentAudio.value.pause();
-      currentAudio.value.currentTime = 0;
-      
-      // 移除所有可能的事件监听器，避免内存泄漏
-      currentAudio.value.onended = null;
-      currentAudio.value.onerror = null;
-      currentAudio.value.onloadeddata = null;
-      currentAudio.value.oncanplay = null;
-      currentAudio.value.oncanplaythrough = null;
-      currentAudio.value.onprogress = null;
-      currentAudio.value.ontimeupdate = null;
-      currentAudio.value.onwaiting = null;
-      currentAudio.value.onstalled = null;
-      currentAudio.value.onloadstart = null;
-      currentAudio.value.onemptied = null;
-      
-      // 清空 src 属性
-      currentAudio.value.src = '';
-      
-      // 调用 load() 强制释放资源
-      currentAudio.value.load();
-      
+    const wasCleaned = cleanupAudioElement(currentAudio.value, {
+      resetCurrentTime: true,
+      logMessage: '清理音频资源',
+      enableLog: true
+    });
+    if (wasCleaned) {
       currentAudio.value = null;
     }
   };
